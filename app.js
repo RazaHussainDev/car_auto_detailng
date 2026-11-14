@@ -1,75 +1,81 @@
-/* ==========================================================
-   MIRRORLINE — Auto Detailing Studio
-   60/120fps GPU Engine: Car Intro Preloader, Lenis-Grade
-   Smooth Wheel Inertia, Viewport Culling & Dirty-Flag Canvas
-   ========================================================== */
+/* ==========================================================================
+   RAZA.DEVELOPER — BESPOKE AUTOMOTIVE STUDIO ENGINE
+   - Scroll animation ONLY on Section 1 (#process Hero)
+   - Hero button (#btn-next-section) animates Hero wash & glides to Section 2
+   - Click & drag laser-wipe configurators for Coating, Correction, Wraps,
+     Forged Calipers, Ceramic Tint, Cockpit Leather, and Private Bay Booking.
+   ========================================================================== */
 
-(() => {
+(function () {
   'use strict';
 
-  // ----------------------------------------------------------
-  // 1. STATE & CONFIGURATION
-  // ----------------------------------------------------------
-  const TOTAL_PROCESS_FRAMES = 107;
-  const TOTAL_COATING_FRAMES = 21;
+  const TOTAL_PROCESS_FRAMES = 107; // f_000..f_106
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  /* ------------------------------------------------------------------------
+     4K IMAGE CACHE & CONFIGURATION STATE
+     ------------------------------------------------------------------------ */
+  const cache = {
+    process: new Array(TOTAL_PROCESS_FRAMES),
+    coatingBeads: null,
+    correction: { before: null, after: null },
+    wraps: { stealth: null, silver: null, midnight: null, crimson: null },
+    wheels: { gold: null, crimson: null, acid: null, silver: null },
+    tint: { vlt70: null, vlt35: null, vlt15: null, vlt05: null },
+    interior: { obsidian: null, cognac: null, porcelain: null }
+  };
+
+  const TINT_KEY_MAP = {
+    '0.0': 'vlt70',
+    '0.38': 'vlt35',
+    '0.68': 'vlt15',
+    '0.92': 'vlt05'
+  };
+
+  function createWipeChannel(initialKey) {
+    return {
+      current: initialKey,
+      prev: initialKey,
+      progress: 1.0,
+      scanning: false,
+      dirty: true
+    };
+  }
 
   const state = {
-    activeSection: 'process',
-    visibleSections: new Set(['process']),
-
-    // Process (0.0 -> 1.0)
-    processProgress: 0.0,
-    targetProcessProgress: 0.0,
-    lastDrawnProcessFrame: -1,
+    // Section 1: Hero Process
+    processProgress: 0.02,
+    processTarget: 0.02,
     isAutoPlayingProcess: false,
+    isJumpingToSection2: false,
 
-    // Coating
-    beadAngle: 62,
-    targetBeadAngle: 112,
-    pointerX: -1000,
-    pointerY: -1000,
+    // Section 2: Coating Hydrophobicity
+    hydroDroplets: [],
 
-    // Correction slider (0.06 -> 0.92, where 0.16 = 3400 swirls, 0.84 = 0 swirls)
-    corrSliderPos: 0.16,
-    targetCorrSliderPos: 0.16,
-    lastAppliedCorrPos: -1,
-    userDraggedCorrection: false,
-    isDraggingCorrection: false,
-    correctionNeedsRedraw: true,
+    // Section 3: Paint Correction
+    corrRatio: 0.18,
+    corrTargetRatio: 0.18,
+    isDraggingCorr: false,
+    corrDirty: true,
 
-    // Wraps ('red' | 'blue' | 'silver')
-    currentWrap: 'red',
-    previousWrap: 'red',
-    wrapScanProgress: 1.0,
-    wrapsNeedsRedraw: true,
-    wrapDisplayPrice: 2900,
-    wrapTargetPrice: 2900,
-    userClickedWrap: false,
+    // Sections 4-7: Click-Triggered Laser Wipe Configurators
+    wraps: createWipeChannel('stealth'),
+    wheels: createWipeChannel('gold'),
+    tint: createWipeChannel('vlt70'),
+    interior: createWipeChannel('obsidian'),
 
-    // Pricing Quote
-    pricingNeedsRedraw: true,
-    vehicle: 'Coupe',
+    // Section 8: Pricing Configurator
     vehicleAddon: 0,
-    pkg: 'Wash',
     pkgBase: 149,
     selectedSlot: null,
-    selectedDay: null,
-    isBooked: false,
-    displayTotal: 149,
-    targetTotal: 149,
+    pricingDirty: true
   };
 
-  const WRAP_META = {
-    red: { name: 'CANDY RED', price: 2900, color: '#E11D48', glow: 'rgba(225, 29, 72, 0.85)' },
-    blue: { name: 'MIDNIGHT BLUE', price: 3200, color: '#6B8AFF', glow: 'rgba(107, 138, 255, 0.85)' },
-    silver: { name: 'LIQUID SILVER', price: 3900, color: '#D8E0EA', glow: 'rgba(216, 224, 234, 0.9)' },
-  };
-
-  // ----------------------------------------------------------
-  // 2. DOM ELEMENTS
-  // ----------------------------------------------------------
+  /* ------------------------------------------------------------------------
+     DOM REFERENCES
+     ------------------------------------------------------------------------ */
   const dom = {
-    introPreloader: document.getElementById('intro-preloader'),
+    preloader: document.getElementById('intro-preloader'),
     introStatusText: document.getElementById('intro-status-text'),
     introPct: document.getElementById('intro-pct'),
     introBarFill: document.getElementById('intro-bar-fill'),
@@ -78,46 +84,56 @@
     navLinks: document.getElementById('nav-links'),
     navItems: Array.from(document.querySelectorAll('.nav-item')),
     navPill: document.getElementById('nav-pill-indicator'),
-    frameModeToggle: document.getElementById('frame-mode-toggle'),
-    frameModeLabel: document.getElementById('frame-mode-label'),
 
-    // Process
-    processSection: document.getElementById('process'),
+    // Section 1: Process
+    secProcess: document.getElementById('process'),
     processCanvas: document.getElementById('process-canvas'),
     flawlessWord: document.getElementById('flawless-word'),
     glossValue: document.getElementById('gloss-value'),
-    glossBarsContainer: document.getElementById('gloss-bars'),
+    glossBarsWrap: document.getElementById('gloss-bars'),
     timelineFill: document.getElementById('timeline-fill'),
     timelineSteps: Array.from(document.querySelectorAll('.timeline-step')),
+    btnNextSection: document.getElementById('btn-next-section'),
     hoodHotspot: document.getElementById('hood-hotspot'),
     btnAutoplayProcess: document.getElementById('btn-autoplay-process'),
     autoplayLabel: document.getElementById('autoplay-label'),
 
-    // Coating
-    coatingSection: document.getElementById('coating'),
+    // Section 2: Coating
+    secCoating: document.getElementById('coating'),
     coatingCanvas: document.getElementById('coating-canvas'),
+    btnHydroBurst: document.getElementById('btn-hydro-burst'),
     beadAngleVal: document.getElementById('bead-angle-val'),
 
-    // Correction
-    correctionSection: document.getElementById('correction'),
+    // Section 3: Correction
     corrComparison: document.getElementById('correction-comparison'),
     corrBeforeCanvas: document.getElementById('correction-before-canvas'),
     corrAfterCanvas: document.getElementById('correction-after-canvas'),
     corrAfterClip: document.getElementById('corr-after-clip'),
     corrDivider: document.getElementById('corr-divider'),
     corrHandle: document.getElementById('corr-handle'),
+    corrPresetBtns: Array.from(document.querySelectorAll('.corr-preset-btn')),
     swirlCounter: document.getElementById('swirl-counter'),
-    mirrorFinishBadge: document.getElementById('mirror-finish-badge'),
+    mirrorBadge: document.getElementById('mirror-finish-badge'),
 
-    // Wraps
-    wrapsSection: document.getElementById('wraps'),
+    // Section 4: Wraps
     wrapsCanvas: document.getElementById('wraps-canvas'),
-    wrapAccentWord: document.getElementById('wrap-accent-word'),
-    wrapOptions: Array.from(document.querySelectorAll('.wrap-option')),
+    wrapOptions: Array.from(document.querySelectorAll('.wrap-option[data-wrap]')),
     wrapPriceValue: document.getElementById('wrap-price-value'),
 
-    // Pricing
-    pricingSection: document.getElementById('pricing'),
+    // Section 5: Wheels & Calipers
+    wheelsCanvas: document.getElementById('wheels-canvas'),
+    caliperOptions: Array.from(document.querySelectorAll('.caliper-option')),
+
+    // Section 6: Window Tint
+    tintCanvas: document.getElementById('tint-canvas'),
+    tintOptions: Array.from(document.querySelectorAll('.tint-option')),
+    tintIrValue: document.getElementById('tint-ir-value'),
+
+    // Section 7: Cockpit Interior
+    interiorCanvas: document.getElementById('interior-canvas'),
+    interiorOptions: Array.from(document.querySelectorAll('.interior-option')),
+
+    // Section 8: Pricing
     pricingCanvas: document.getElementById('pricing-canvas'),
     vehicleBtns: Array.from(document.querySelectorAll('#vehicle-selector .quote-pill')),
     pkgBtns: Array.from(document.querySelectorAll('#package-selector .pkg-card')),
@@ -126,966 +142,797 @@
     btnBookSubmit: document.getElementById('btn-book-submit'),
     bookSubmitText: document.getElementById('book-submit-text'),
     yourCarBadge: document.getElementById('your-car-badge'),
-    yourCarWrapName: document.getElementById('your-car-wrap-name'),
+    yourCarWrapName: document.getElementById('your-car-wrap-name')
   };
 
-  // Build 24 GLOSS LED bar segments
+  /* ------------------------------------------------------------------------
+     INITIALIZE HERO GLOSS BARS
+     ------------------------------------------------------------------------ */
   const glossBarEls = [];
-  for (let i = 0; i < 24; i++) {
-    const seg = document.createElement('div');
-    seg.className = 'gloss-bar-seg';
-    dom.glossBarsContainer.appendChild(seg);
-    glossBarEls.push(seg);
-  }
-
-  // ----------------------------------------------------------
-  // 3. GPU ASSET PRELOADER + CINEMATIC CAR INTRO CHOREOGRAPHY
-  // ----------------------------------------------------------
-  const images = {
-    process: new Array(TOTAL_PROCESS_FRAMES),
-    coating: new Array(TOTAL_COATING_FRAMES),
-    correctionAfter: new Image(),
-    correctionBefore: new Image(),
-    wraps: {
-      red: new Image(),
-      blue: new Image(),
-      silver: new Image(),
-    },
-  };
-
-  let totalAssetsToLoad = TOTAL_PROCESS_FRAMES + TOTAL_COATING_FRAMES + 5;
-  let loadedAssetsCount = 0;
-
-  function onAssetLoaded() {
-    loadedAssetsCount++;
-    if (loadedAssetsCount >= totalAssetsToLoad) {
-      state.correctionNeedsRedraw = true;
-      state.wrapsNeedsRedraw = true;
-      state.pricingNeedsRedraw = true;
-      state.lastDrawnProcessFrame = -1;
+  if (dom.glossBarsWrap) {
+    dom.glossBarsWrap.innerHTML = '';
+    for (let i = 0; i < 24; i++) {
+      const b = document.createElement('div');
+      b.className = 'gloss-bar';
+      dom.glossBarsWrap.appendChild(b);
+      glossBarEls.push(b);
     }
   }
 
-  function loadAndDecodeImage(img, src) {
-    img.decoding = 'async';
-    img.onload = () => {
-      if (img.decode) {
-        img.decode().catch(() => {}).finally(onAssetLoaded);
-      } else {
-        onAssetLoaded();
-      }
-    };
-    img.onerror = onAssetLoaded;
-    img.src = src;
-  }
-
-  function preloadAllAssets() {
-    loadAndDecodeImage(images.wraps.red, 'assets/wraps/red.webp');
-    loadAndDecodeImage(images.wraps.blue, 'assets/wraps/blue.webp');
-    loadAndDecodeImage(images.wraps.silver, 'assets/wraps/silver.webp');
-    loadAndDecodeImage(images.correctionAfter, 'assets/correction/after.webp');
-    loadAndDecodeImage(images.correctionBefore, 'assets/correction/before.webp');
-
-    for (let i = 0; i < TOTAL_PROCESS_FRAMES; i++) {
-      const img = new Image();
-      images.process[i] = img;
-      loadAndDecodeImage(img, `assets/process/f_${String(i).padStart(3, '0')}.webp`);
-    }
-
-    for (let i = 0; i < TOTAL_COATING_FRAMES; i++) {
-      const img = new Image();
-      images.coating[i] = img;
-      loadAndDecodeImage(img, `assets/coating/c_${String(i).padStart(2, '0')}.webp`);
-    }
-  }
-
-  /**
-   * Runs the 3-stage Car Intro Animation:
-   * 1. Car drives in from left (phase-enter)
-   * 2. Car pauses in studio center while hex ceiling lights ignite & preloader reaches 100% (phase-pause)
-   * 3. Car launches off to the right with crimson tail-light trails & website reveals (phase-launch -> intro-exit)
-   */
-  function runCarIntroSequence(isReplay = false) {
-    const el = dom.introPreloader;
-    if (!el) return;
-
-    document.body.classList.add('is-loading');
-    el.classList.remove('intro-exit', 'phase-enter', 'phase-pause', 'phase-launch');
-    if (dom.introPct) dom.introPct.textContent = '0%';
-    if (dom.introBarFill) dom.introBarFill.style.width = '0%';
-    if (dom.introStatusText) dom.introStatusText.textContent = 'ENTERING DETAIL STUDIO...';
-
-    // Force reflow so car starts at translate3d(-115vw, 0, 0)
-    void el.offsetWidth;
-
-    // Phase 1: Car drives in (0ms -> 900ms)
-    el.classList.add('phase-enter');
-
-    const startTime = performance.now();
-    const minDuration = isReplay ? 1850 : 2100;
-
-    function tickIntro(now) {
-      const elapsed = now - startTime;
-      const timeProgress = Math.min(1, elapsed / minDuration);
-      const assetProgress = isReplay ? 1 : Math.min(1, loadedAssetsCount / Math.max(1, totalAssetsToLoad * 0.75));
-      const combined = Math.min(1, timeProgress * 0.65 + assetProgress * 0.35);
-      const pct = Math.round(combined * 100);
-
-      if (dom.introPct) dom.introPct.textContent = `${pct}%`;
-      if (dom.introBarFill) dom.introBarFill.style.width = `${pct}%`;
-
-      if (elapsed >= 850 && !el.classList.contains('phase-pause') && !el.classList.contains('phase-launch')) {
-        // Phase 2: Car pauses in center of studio, hex lights ignite, headlights flare!
-        el.classList.remove('phase-enter');
-        el.classList.add('phase-pause');
-        if (dom.introStatusText) dom.introStatusText.textContent = 'IGNITING HEXAGON STUDIO LIGHTS...';
-      }
-
-      if (combined < 1 || elapsed < minDuration) {
-        requestAnimationFrame(tickIntro);
-      } else {
-        // Phase 3: Studio Ready -> Car launches forward at high speed!
-        if (dom.introPct) dom.introPct.textContent = '100%';
-        if (dom.introBarFill) dom.introBarFill.style.width = '100%';
-        if (dom.introStatusText) dom.introStatusText.textContent = 'STUDIO READY · LAUNCHING';
-
-        el.classList.remove('phase-pause');
-        el.classList.add('phase-launch');
-
-        setTimeout(() => {
-          el.classList.add('intro-exit');
-          document.body.classList.remove('is-loading');
-          state.lastDrawnProcessFrame = -1;
-          state.correctionNeedsRedraw = true;
-          state.wrapsNeedsRedraw = true;
-          state.pricingNeedsRedraw = true;
-        }, 520);
-      }
-    }
-
-    requestAnimationFrame(tickIntro);
-  }
-
-  if (dom.replayIntroBtn) {
-    dom.replayIntroBtn.addEventListener('click', () => {
-      runCarIntroSequence(true);
-    });
-  }
-
-  // ----------------------------------------------------------
-  // 4. LENIS-GRADE VIRTUAL SMOOTH SCROLL ENGINE (DESKTOP WHEEL + NATIVE TOUCH)
-  // ----------------------------------------------------------
-  const smoothScroll = {
-    currentY: window.scrollY,
-    targetY: window.scrollY,
-    isWheelActive: false,
-    lerp: 0.115, // Silky-smooth exponential damping
-  };
-
-  function getMaxScrollY() {
-    return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-  }
-
-  // Intercept desktop mouse wheel for buttery inertia scrolling
-  window.addEventListener('wheel', (e) => {
-    if (document.body.classList.contains('is-loading')) {
-      e.preventDefault();
-      return;
-    }
-    // Do not hijack pinch-zoom
-    if (e.ctrlKey) return;
-
-    e.preventDefault();
-    if (!smoothScroll.isWheelActive) {
-      smoothScroll.currentY = window.scrollY;
-      smoothScroll.targetY = window.scrollY;
-      smoothScroll.isWheelActive = true;
-    }
-
-    // Normalize wheel delta across mice and trackpads
-    const delta = e.deltaMode === 1 ? e.deltaY * 36 : e.deltaY;
-    smoothScroll.targetY = Math.max(0, Math.min(getMaxScrollY(), smoothScroll.targetY + delta * 0.95));
-
-    state.isAutoPlayingProcess = false;
-    if (dom.autoplayLabel) dom.autoplayLabel.textContent = 'Our process';
-  }, { passive: false });
-
-  // Sync when user drags native scrollbar or uses touch on mobile
-  window.addEventListener('touchstart', () => {
-    smoothScroll.isWheelActive = false;
-  }, { passive: true });
-
-  window.addEventListener('scroll', () => {
-    if (!smoothScroll.isWheelActive) {
-      smoothScroll.currentY = window.scrollY;
-      smoothScroll.targetY = window.scrollY;
-    }
-    handleScrollMetrics();
-  }, { passive: true });
-
-  function scrollToPositionSmoothly(destY) {
-    smoothScroll.currentY = window.scrollY;
-    smoothScroll.targetY = Math.max(0, Math.min(getMaxScrollY(), destY));
-    smoothScroll.isWheelActive = true;
-  }
-
-  // ----------------------------------------------------------
-  // 5. NAVBAR PILL & SECTION OBSERVER (VIEWPORT CULLING)
-  // ----------------------------------------------------------
-  function updateNavPill(sectionId) {
-    const activeBtn = dom.navItems.find((b) => b.dataset.section === sectionId);
-    if (!activeBtn || !dom.navPill) return;
-    dom.navItems.forEach((b) => b.classList.toggle('active', b === activeBtn));
-    dom.navPill.style.width = `${activeBtn.offsetWidth}px`;
-    dom.navPill.style.transform = `translate3d(${activeBtn.offsetLeft}px, 0, 0)`;
-  }
-
-  dom.navItems.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const secId = btn.dataset.section;
-      const targetEl = document.getElementById(secId);
-      if (targetEl) {
-        state.activeSection = secId;
-        updateNavPill(secId);
-        scrollToPositionSmoothly(targetEl.offsetTop);
-      }
-    });
-  });
-
-  document.querySelectorAll('[data-goto]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const secId = btn.dataset.goto;
-      const targetEl = document.getElementById(secId);
-      if (targetEl) {
-        scrollToPositionSmoothly(targetEl.offsetTop);
-      }
-    });
-  });
-
-  // Showcase Frame Mode Toggle
-  if (dom.frameModeToggle) {
-    dom.frameModeToggle.addEventListener('click', () => {
-      const isFrame = document.body.classList.toggle('mode-frame');
-      document.body.classList.toggle('mode-fullscreen', !isFrame);
-      dom.frameModeLabel.textContent = isFrame ? 'Full Screen' : 'Reel Frame';
-      setTimeout(() => {
-        resizeAllCanvases();
-        updateNavPill(state.activeSection);
-      }, 60);
-    });
-  }
-
-  // IntersectionObserver to cull offscreen canvas animations (massive FPS boost!)
-  const sectionObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      const id = entry.target.dataset.sectionId;
-      if (!id) return;
-      if (entry.isIntersecting) {
-        state.visibleSections.add(id);
-        if (id === 'process') state.lastDrawnProcessFrame = -1;
-        if (id === 'correction') state.correctionNeedsRedraw = true;
-        if (id === 'wraps') state.wrapsNeedsRedraw = true;
-        if (id === 'pricing') state.pricingNeedsRedraw = true;
-      } else {
-        state.visibleSections.delete(id);
-      }
-    });
-  }, { rootMargin: '150px 0px' });
-
-  [
-    dom.processSection,
-    dom.coatingSection,
-    dom.correctionSection,
-    dom.wrapsSection,
-    dom.pricingSection,
-  ].forEach((sec) => {
-    if (sec) sectionObserver.observe(sec);
-  });
-
-  // ----------------------------------------------------------
-  // 6. CANVAS SIZING & SMART COVER RENDERING
-  // ----------------------------------------------------------
-  const canvases = [
+  /* ------------------------------------------------------------------------
+     HIGH-DPI CANVAS MANAGEMENT
+     ------------------------------------------------------------------------ */
+  const allCanvases = [
     dom.processCanvas,
     dom.coatingCanvas,
     dom.corrBeforeCanvas,
     dom.corrAfterCanvas,
     dom.wrapsCanvas,
-    dom.pricingCanvas,
-  ];
+    dom.wheelsCanvas,
+    dom.tintCanvas,
+    dom.interiorCanvas,
+    dom.pricingCanvas
+  ].filter(Boolean);
 
   function resizeAllCanvases() {
-    // Cap DPR at 1.5 for ultra-fast GPU fill-rate with crisp retina sharpness
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    canvases.forEach((c) => {
-      if (!c) return;
-      const rect = c.getBoundingClientRect();
-      const w = Math.max(1, Math.round(rect.width * dpr));
-      const h = Math.max(1, Math.round(rect.height * dpr));
-      if (c.width !== w || c.height !== h) {
-        c.width = w;
-        c.height = h;
+    allCanvases.forEach((c) => {
+      const rect = c.parentElement.getBoundingClientRect();
+      const w = Math.max(1, Math.floor(rect.width));
+      const h = Math.max(1, Math.floor(rect.height));
+      if (c.width !== w * DPR || c.height !== h * DPR) {
+        c.width = w * DPR;
+        c.height = h * DPR;
       }
     });
-    buildProceduralSwirlOverlay();
-    state.lastDrawnProcessFrame = -1;
-    state.correctionNeedsRedraw = true;
-    state.wrapsNeedsRedraw = true;
-    state.pricingNeedsRedraw = true;
-    handleScrollMetrics();
-    requestAnimationFrame(() => updateNavPill(state.activeSection));
+    state.corrDirty = true;
+    state.wraps.dirty = true;
+    state.wheels.dirty = true;
+    state.tint.dirty = true;
+    state.interior.dirty = true;
+    state.pricingDirty = true;
   }
 
-  window.addEventListener('resize', resizeAllCanvases);
+  window.addEventListener('resize', () => {
+    resizeAllCanvases();
+    updateNavPill();
+  });
 
-  function drawImageSmartCover(ctx, img, cw, ch, opts = {}) {
-    if (!img || !img.complete || !img.naturalWidth) return;
-    const iw = img.naturalWidth;
-    const ih = img.naturalHeight;
-    const isMobile = cw < ch * 0.95;
+  function drawCoverImage(ctx, img, cw, ch, focusX = 0.56, focusY = 0.5) {
+    ctx.fillStyle = '#060608';
+    ctx.fillRect(0, 0, cw, ch);
+    if (!img) return;
 
-    const scale = Math.max(cw / iw, ch / ih) * (opts.zoom || (isMobile ? 1.04 : 1.0));
+    const iw = img.naturalWidth || img.width || 1344;
+    const ih = img.naturalHeight || img.height || 768;
+    const scale = Math.max(cw / iw, ch / ih);
     const dw = iw * scale;
     const dh = ih * scale;
+    const dx = (cw - dw) * focusX;
+    const dy = (ch - dh) * focusY;
 
-    const alignX = opts.alignX !== undefined ? opts.alignX : (isMobile ? 0.68 : 0.5);
-    const alignY = opts.alignY !== undefined ? opts.alignY : (isMobile ? 0.35 : 0.5);
-
-    const dx = (cw - dw) * alignX + (opts.offsetX || 0);
-    const dy = (ch - dh) * alignY + (opts.offsetY || 0);
-
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.restore();
   }
 
-  // ----------------------------------------------------------
-  // 7. SECTION 1: PROCESS ("Filthy to flawless.") — 107-Frame Dirty-Flag Renderer
-  // ----------------------------------------------------------
-  let lastGlossInt = -1;
-  let lastStepIdx = -1;
+  /**
+   * Shared horizontal laser-wipe renderer for Wraps, Wheels, Tint, and Interior stages.
+   */
+  function renderWipeCanvas(canvas, imgMap, channel, focusX = 0.65) {
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const cw = canvas.width;
+    const ch = canvas.height;
+    const currImg = imgMap[channel.current];
+    const prevImg = imgMap[channel.prev] || currImg;
 
-  function renderProcessCanvas(progress) {
-    const c = dom.processCanvas;
-    if (!c) return;
-    const frameIdx = Math.max(0, Math.min(TOTAL_PROCESS_FRAMES - 1, Math.round(progress * (TOTAL_PROCESS_FRAMES - 1))));
+    if (!channel.scanning || channel.progress >= 1) {
+      drawCoverImage(ctx, currImg, cw, ch, focusX, 0.5);
+      channel.dirty = false;
+      return;
+    }
 
-    // Dirty-flag check: only redraw canvas when the frame index actually changes!
-    if (frameIdx === state.lastDrawnProcessFrame) return;
+    drawCoverImage(ctx, prevImg, cw, ch, focusX, 0.5);
 
-    const img = images.process[frameIdx];
-    if (!img || !img.complete || !img.naturalWidth) return;
+    const scanX = cw * channel.progress;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, scanX, ch);
+    ctx.clip();
+    drawCoverImage(ctx, currImg, cw, ch, focusX, 0.5);
+    ctx.restore();
 
-    state.lastDrawnProcessFrame = frameIdx;
-    const ctx = c.getContext('2d', { alpha: false });
-    const cw = c.width;
-    const ch = c.height;
-
-    ctx.fillStyle = '#070709';
-    ctx.fillRect(0, 0, cw, ch);
-    drawImageSmartCover(ctx, img, cw, ch);
+    // Warm Champagne Titanium Laser Scan Line
+    ctx.save();
+    const grad = ctx.createLinearGradient(0, 0, 0, ch);
+    grad.addColorStop(0, 'rgba(223,201,163,0)');
+    grad.addColorStop(0.2, '#F4E6CA');
+    grad.addColorStop(0.5, '#FAF7F2');
+    grad.addColorStop(0.8, '#DFC9A3');
+    grad.addColorStop(1, 'rgba(223,201,163,0)');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2.6 * DPR;
+    ctx.shadowColor = '#DFC9A3';
+    ctx.shadowBlur = 22 * DPR;
+    ctx.beginPath();
+    ctx.moveTo(scanX, 0);
+    ctx.lineTo(scanX, ch);
+    ctx.stroke();
+    ctx.restore();
   }
 
-  function updateProcessUI(progress) {
-    const gloss = Math.round(12 + progress * 86);
-    if (gloss !== lastGlossInt) {
-      lastGlossInt = gloss;
-      if (dom.glossValue) dom.glossValue.textContent = `${gloss}%`;
+  /* ------------------------------------------------------------------------
+     PRELOADER & CRITICAL ASSET DECODING
+     ------------------------------------------------------------------------ */
+  function loadImage(src) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  }
 
-      let accentColor = '#C49A76'; // 01 MUD
-      if (progress >= 0.18 && progress < 0.45) accentColor = '#F3ECE6'; // 02 FOAM
-      else if (progress >= 0.45 && progress < 0.72) accentColor = '#F09AA8'; // 03 RINSE
-      else if (progress >= 0.72) accentColor = '#E11D48'; // 04 DRY & 05 SHINE
+  async function runPreloaderSequence() {
+    const startMs = performance.now();
+    await loadImage('assets/intro/hero_reveal.webp');
 
-      if (dom.flawlessWord) dom.flawlessWord.style.color = accentColor;
-      if (dom.glossValue) dom.glossValue.style.color = accentColor;
+    if (dom.preloader) {
+      requestAnimationFrame(() => dom.preloader.classList.add('phase-enter'));
+      setTimeout(() => dom.preloader.classList.add('phase-pause'), 820);
+    }
 
-      const litCount = Math.max(2, Math.round((gloss / 100) * 24));
-      for (let i = 0; i < 24; i++) {
-        const isLit = i < litCount;
-        glossBarEls[i].style.backgroundColor = isLit ? accentColor : 'rgba(255,255,255,0.12)';
+    const tasks = [];
+    const priorityIndices = [0, 2, 14, 28, 46, 68, 88, 102, 106];
+    priorityIndices.forEach((idx) => {
+      const num = String(idx).padStart(3, '0');
+      tasks.push(loadImage(`assets/process/f_${num}.webp`).then((img) => { cache.process[idx] = img; }));
+    });
+
+    tasks.push(
+      loadImage('assets/coating/clean_beads.webp').then((img) => { cache.coatingBeads = img; }),
+      loadImage('assets/correction/after.webp').then((img) => { cache.correction.after = img; }),
+      loadImage('assets/correction/before.webp').then((img) => { cache.correction.before = img; }),
+      loadImage('assets/wraps/stealth.webp').then((img) => { cache.wraps.stealth = img; }),
+      loadImage('assets/wraps/silver.webp').then((img) => { cache.wraps.silver = img; }),
+      loadImage('assets/wraps/midnight.webp').then((img) => { cache.wraps.midnight = img; }),
+      loadImage('assets/wraps/crimson.webp').then((img) => { cache.wraps.crimson = img; }),
+      loadImage('assets/wheels/gold.webp').then((img) => { cache.wheels.gold = img; }),
+      loadImage('assets/wheels/crimson.webp').then((img) => { cache.wheels.crimson = img; }),
+      loadImage('assets/wheels/acid.webp').then((img) => { cache.wheels.acid = img; }),
+      loadImage('assets/wheels/silver.webp').then((img) => { cache.wheels.silver = img; }),
+      loadImage('assets/tint/vlt70.webp').then((img) => { cache.tint.vlt70 = img; }),
+      loadImage('assets/tint/vlt35.webp').then((img) => { cache.tint.vlt35 = img; }),
+      loadImage('assets/tint/vlt15.webp').then((img) => { cache.tint.vlt15 = img; }),
+      loadImage('assets/tint/vlt05.webp').then((img) => { cache.tint.vlt05 = img; }),
+      loadImage('assets/interior/obsidian.webp').then((img) => { cache.interior.obsidian = img; }),
+      loadImage('assets/interior/cognac.webp').then((img) => { cache.interior.cognac = img; }),
+      loadImage('assets/interior/porcelain.webp').then((img) => { cache.interior.porcelain = img; })
+    );
+
+    let done = 0;
+    const total = tasks.length;
+    await Promise.all(
+      tasks.map((p) =>
+        p.then(() => {
+          done++;
+          const pct = Math.min(100, Math.round((done / total) * 100));
+          if (dom.introPct) dom.introPct.textContent = `${pct}%`;
+          if (dom.introBarFill) dom.introBarFill.style.width = `${pct}%`;
+          if (dom.introStatusText) {
+            if (pct < 45) dom.introStatusText.textContent = 'PREPARING BAY 01 OPTICS...';
+            else if (pct < 90) dom.introStatusText.textContent = 'DECODING 4K STUDIO ASSETS...';
+            else dom.introStatusText.textContent = 'ATELIER READY · LAUNCHING';
+          }
+        })
+      )
+    );
+
+    resizeAllCanvases();
+    initHydroDroplets();
+    renderProcessSection(true);
+    renderCoatingSection();
+    renderCorrectionCanvases();
+    updateCorrectionUI(state.corrRatio);
+    renderWipeCanvas(dom.wrapsCanvas, cache.wraps, state.wraps, 0.72);
+    renderWipeCanvas(dom.wheelsCanvas, cache.wheels, state.wheels, 0.5);
+    renderWipeCanvas(dom.tintCanvas, cache.tint, state.tint, 0.68);
+    renderWipeCanvas(dom.interiorCanvas, cache.interior, state.interior, 0.5);
+    renderPricingSection();
+
+    // Ensure full cinematic headlight reveal + laser sweep finishes cleanly even on instant cache loads
+    const remainingShowMs = Math.max(380, 1750 - (performance.now() - startMs));
+    setTimeout(() => {
+      if (dom.preloader) dom.preloader.classList.add('phase-launch');
+      setTimeout(() => {
+        if (dom.preloader) dom.preloader.classList.add('intro-exit');
+        document.body.classList.remove('is-loading');
+        updateNavPill();
+      }, 540);
+    }, remainingShowMs);
+
+    // Load remaining Hero scrub frames in background
+    for (let i = 0; i < TOTAL_PROCESS_FRAMES; i++) {
+      if (!cache.process[i]) {
+        const num = String(i).padStart(3, '0');
+        loadImage(`assets/process/f_${num}.webp`).then((img) => { cache.process[i] = img; });
       }
     }
+  }
 
-    const fillPct = Math.max(6, Math.min(100, 8 + progress * 92));
-    if (dom.timelineFill) {
-      dom.timelineFill.style.width = `${fillPct.toFixed(1)}%`;
+  if (dom.replayIntroBtn) {
+    dom.replayIntroBtn.addEventListener('click', () => {
+      if (!dom.preloader) return;
+      dom.preloader.className = 'intro-preloader';
+      if (dom.introPct) dom.introPct.textContent = '100%';
+      if (dom.introBarFill) dom.introBarFill.style.width = '100%';
+      if (dom.introStatusText) dom.introStatusText.textContent = 'REPLAYING ATELIER REVEAL...';
+
+      requestAnimationFrame(() => dom.preloader.classList.add('phase-enter'));
+      setTimeout(() => dom.preloader.classList.add('phase-pause'), 820);
+      setTimeout(() => dom.preloader.classList.add('phase-launch'), 1950);
+      setTimeout(() => dom.preloader.classList.add('intro-exit'), 2500);
+    });
+  }
+
+  /* ------------------------------------------------------------------------
+     SECTION 1 (HERO — ONLY SECTION WITH SCROLL ANIMATION + DIRECT NEXT BTN)
+     ------------------------------------------------------------------------ */
+  function getNearestFrame(arr, idx) {
+    if (arr[idx]) return arr[idx];
+    for (let off = 1; off < arr.length; off++) {
+      if (idx - off >= 0 && arr[idx - off]) return arr[idx - off];
+      if (idx + off < arr.length && arr[idx + off]) return arr[idx + off];
     }
+    return null;
+  }
 
-    let stepIdx = 0;
-    if (progress >= 0.82) stepIdx = 4;
-    else if (progress >= 0.64) stepIdx = 3;
-    else if (progress >= 0.42) stepIdx = 2;
-    else if (progress >= 0.18) stepIdx = 1;
+  function updateProcessScrollTarget() {
+    if (!dom.secProcess || state.isAutoPlayingProcess || state.isJumpingToSection2) return;
+    const rect = dom.secProcess.getBoundingClientRect();
+    const scrollable = Math.max(1, rect.height - window.innerHeight);
+    const raw = -rect.top / scrollable;
+    state.processTarget = Math.max(0.02, Math.min(1, raw));
+  }
 
-    if (stepIdx !== lastStepIdx) {
-      lastStepIdx = stepIdx;
-      dom.timelineSteps.forEach((btn, idx) => {
-        btn.classList.toggle('active', idx <= stepIdx);
-      });
+  let lastProcessIdx = -1;
+
+  function renderProcessSection(force = false) {
+    if (!dom.processCanvas) return;
+    const diff = state.processTarget - state.processProgress;
+    if (Math.abs(diff) > 0.0005) state.processProgress += diff * 0.16;
+    else state.processProgress = state.processTarget;
+
+    const p = Math.max(0, Math.min(1, state.processProgress));
+    const idx = Math.min(TOTAL_PROCESS_FRAMES - 1, Math.floor(p * (TOTAL_PROCESS_FRAMES - 1)));
+
+    if (force || idx !== lastProcessIdx) {
+      lastProcessIdx = idx;
+      const ctx = dom.processCanvas.getContext('2d');
+      const img = getNearestFrame(cache.process, idx);
+      drawCoverImage(ctx, img, dom.processCanvas.width, dom.processCanvas.height, 0.72, 0.5);
+
+      const glossPct = Math.round(12 + p * 88);
+      if (dom.glossValue) dom.glossValue.textContent = `${glossPct}%`;
+
+      const litCount = Math.round(p * glossBarEls.length);
+      glossBarEls.forEach((b, i) => b.classList.toggle('lit', i < litCount));
+
+      if (dom.timelineFill) dom.timelineFill.style.width = `${Math.max(4, p * 100)}%`;
+      const stepIdx = Math.min(4, Math.floor(p * 5));
+      dom.timelineSteps.forEach((btn, i) => btn.classList.toggle('active', i === stepIdx));
+
+      if (dom.flawlessWord) dom.flawlessWord.classList.toggle('is-flawless', p > 0.82);
     }
+  }
 
-    if (dom.hoodHotspot) {
-      dom.hoodHotspot.classList.toggle('visible', progress > 0.86);
+  // Hero direct button ("Explore Coating"): plays wash animation AND smoothly glides to Section 2!
+  function playHeroAndGlideToCoating() {
+    if (!dom.secCoating) return;
+    state.isJumpingToSection2 = true;
+    state.isAutoPlayingProcess = false;
+
+    const startP = state.processProgress;
+    const startY = window.scrollY;
+    const targetY = dom.secCoating.getBoundingClientRect().top + window.scrollY;
+    const startT = performance.now();
+    const duration = 840;
+
+    function animateJump(now) {
+      const t = Math.min(1, (now - startT) / duration);
+      const ease = 1 - Math.pow(1 - t, 3);
+
+      state.processProgress = startP + (1.0 - startP) * Math.min(1, t * 1.45);
+      state.processTarget = state.processProgress;
+      renderProcessSection(true);
+      window.scrollTo(0, startY + (targetY - startY) * ease);
+
+      if (t < 1) {
+        requestAnimationFrame(animateJump);
+      } else {
+        state.isJumpingToSection2 = false;
+        triggerHydroBurst();
+      }
     }
+    requestAnimationFrame(animateJump);
+  }
+
+  if (dom.btnNextSection) dom.btnNextSection.addEventListener('click', playHeroAndGlideToCoating);
+  if (dom.hoodHotspot) dom.hoodHotspot.addEventListener('click', playHeroAndGlideToCoating);
+
+  if (dom.btnAutoplayProcess) {
+    dom.btnAutoplayProcess.addEventListener('click', () => {
+      state.isAutoPlayingProcess = !state.isAutoPlayingProcess;
+      if (state.isAutoPlayingProcess) {
+        if (state.processProgress > 0.94) state.processProgress = 0.02;
+        state.processTarget = 1.0;
+        if (dom.autoplayLabel) dom.autoplayLabel.textContent = 'Pause wash';
+      } else {
+        if (dom.autoplayLabel) dom.autoplayLabel.textContent = 'Auto wash';
+      }
+    });
   }
 
   dom.timelineSteps.forEach((btn) => {
     btn.addEventListener('click', () => {
-      const targetP = parseFloat(btn.dataset.progress || '0');
+      const targetP = parseFloat(btn.getAttribute('data-progress') || '0.02');
       state.isAutoPlayingProcess = false;
-      if (dom.autoplayLabel) dom.autoplayLabel.textContent = 'Our process';
+      if (dom.autoplayLabel) dom.autoplayLabel.textContent = 'Auto wash';
+      state.processTarget = targetP;
 
-      const secTop = dom.processSection.offsetTop;
-      const scrollable = dom.processSection.offsetHeight - window.innerHeight;
-      scrollToPositionSmoothly(secTop + scrollable * targetP);
+      if (dom.secProcess) {
+        const rect = dom.secProcess.getBoundingClientRect();
+        const top = rect.top + window.scrollY;
+        const scrollable = Math.max(1, rect.height - window.innerHeight);
+        window.scrollTo({ top: top + targetP * scrollable, behavior: 'smooth' });
+      }
     });
   });
 
-  if (dom.btnAutoplayProcess) {
-    dom.btnAutoplayProcess.addEventListener('click', () => {
-      if (state.processProgress > 0.92) {
-        state.processProgress = 0.0;
-        state.targetProcessProgress = 0.0;
-      }
-      state.isAutoPlayingProcess = !state.isAutoPlayingProcess;
-      if (dom.autoplayLabel) {
-        dom.autoplayLabel.textContent = state.isAutoPlayingProcess ? 'Playing...' : 'Our process';
-      }
-    });
-  }
+  /* ------------------------------------------------------------------------
+     SECTION 2: CERAMIC COATING (4K BEADS + INTERACTIVE DROPLET PHYSICS)
+     ------------------------------------------------------------------------ */
+  const mouseCoating = { x: -99, y: -99 };
 
-  if (dom.hoodHotspot) {
-    dom.hoodHotspot.addEventListener('click', () => {
-      if (dom.coatingSection) {
-        scrollToPositionSmoothly(dom.coatingSection.offsetTop + 60);
-      }
-    });
-  }
-
-  // ----------------------------------------------------------
-  // 8. SECTION 2: COATING ("Water can't stick.")
-  // ----------------------------------------------------------
-  const waterBeads = Array.from({ length: 18 }, () => ({
-    x: Math.random(),
-    y: Math.random(),
-    vx: 0,
-    vy: Math.random() * 0.0012 + 0.0004,
-    r: Math.random() * 8 + 4,
-  }));
-
-  if (dom.coatingSection) {
-    dom.coatingSection.addEventListener('pointermove', (e) => {
-      const rect = dom.coatingCanvas.getBoundingClientRect();
-      state.pointerX = (e.clientX - rect.left) / rect.width;
-      state.pointerY = (e.clientY - rect.top) / rect.height;
-    }, { passive: true });
-    dom.coatingSection.addEventListener('pointerleave', () => {
-      state.pointerX = -1000;
-      state.pointerY = -1000;
-    }, { passive: true });
-  }
-
-  function renderCoatingCanvas(now) {
-    const c = dom.coatingCanvas;
-    if (!c) return;
-    const ctx = c.getContext('2d', { alpha: false });
-    const cw = c.width;
-    const ch = c.height;
-
-    const cyclePos = (now * 0.011) % ((TOTAL_COATING_FRAMES - 1) * 2);
-    const rawIdx = cyclePos <= (TOTAL_COATING_FRAMES - 1)
-      ? cyclePos
-      : (TOTAL_COATING_FRAMES - 1) * 2 - cyclePos;
-    const idx = Math.round(rawIdx);
-    const img = images.coating[idx];
-
-    if (img && img.complete && img.naturalWidth) {
-      drawImageSmartCover(ctx, img, cw, ch, { alignX: 0.55, alignY: 0.5 });
+  function initHydroDroplets() {
+    state.hydroDroplets = [];
+    for (let i = 0; i < 34; i++) {
+      state.hydroDroplets.push({
+        x: 0.08 + Math.random() * 0.56,
+        y: 0.22 + Math.random() * 0.68,
+        vx: (Math.random() - 0.5) * 0.0008,
+        vy: 0.0007 + Math.random() * 0.0014,
+        r: (2.2 + Math.random() * 4.2) * DPR
+      });
     }
+  }
 
-    const scale = cw / 1000;
-    ctx.save();
-    waterBeads.forEach((b) => {
-      const dx = b.x - state.pointerX;
-      const dy = b.y - state.pointerY;
-      const dist = Math.hypot(dx, dy);
-      if (dist < 0.16 && dist > 0.0001) {
-        const force = (0.16 - dist) * 0.08;
-        b.vx += (dx / dist) * force;
-        b.vy += (dy / dist) * force;
-      }
-
-      b.x += b.vx + 0.0003;
-      b.y += b.vy;
-      b.vx *= 0.92;
-      b.vy = b.vy * 0.95 + 0.00018;
-
-      if (b.y > 1.05) { b.y = -0.04; b.x = Math.random(); b.vx = 0; b.vy = 0.001; }
-      if (b.x > 1.05) b.x = -0.04;
-      if (b.x < -0.05) b.x = 1.04;
-
-      const px = b.x * cw;
-      const py = b.y * ch;
-      const r = Math.max(3, b.r * scale);
-
-      ctx.beginPath();
-      ctx.ellipse(px, py, r, r * 0.82, -0.15, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(180, 12, 38, 0.55)';
-      ctx.strokeStyle = 'rgba(255, 210, 220, 0.65)';
-      ctx.lineWidth = 1.2;
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.ellipse(px - r * 0.28, py - r * 0.26, r * 0.26, r * 0.13, -0.4, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
-      ctx.fill();
-    });
-    ctx.restore();
-
-    state.beadAngle += (state.targetBeadAngle - state.beadAngle) * 0.08;
+  function triggerHydroBurst() {
+    for (let i = 0; i < 28; i++) {
+      state.hydroDroplets.push({
+        x: 0.34 + (Math.random() - 0.5) * 0.4,
+        y: 0.45 + (Math.random() - 0.5) * 0.34,
+        vx: (Math.random() - 0.45) * 0.008,
+        vy: (Math.random() - 0.25) * 0.008,
+        r: (3 + Math.random() * 4.8) * DPR
+      });
+    }
+    if (state.hydroDroplets.length > 88) {
+      state.hydroDroplets.splice(0, state.hydroDroplets.length - 88);
+    }
     if (dom.beadAngleVal) {
-      dom.beadAngleVal.textContent = String(Math.round(state.beadAngle));
+      dom.beadAngleVal.textContent = '124';
+      setTimeout(() => { if (dom.beadAngleVal) dom.beadAngleVal.textContent = '118'; }, 1100);
     }
   }
 
-  // ----------------------------------------------------------
-  // 9. SECTION 3: CORRECTION ("Erase every swirl.")
-  //    Static Pre-Baked Canvas Layers + 120fps GPU CSS Clip-Path Slider!
-  // ----------------------------------------------------------
-  let swirlPatternCanvas = null;
+  if (dom.btnHydroBurst) dom.btnHydroBurst.addEventListener('click', triggerHydroBurst);
 
-  function buildProceduralSwirlOverlay() {
-    if (!dom.corrBeforeCanvas) return;
-    const w = dom.corrBeforeCanvas.width || 960;
-    const h = dom.corrBeforeCanvas.height || 540;
-    swirlPatternCanvas = document.createElement('canvas');
-    swirlPatternCanvas.width = w;
-    swirlPatternCanvas.height = h;
-    const sctx = swirlPatternCanvas.getContext('2d');
-
-    sctx.strokeStyle = 'rgba(255, 225, 230, 0.13)';
-    sctx.lineWidth = Math.max(0.7, w / 1300);
-
-    const centers = [
-      { x: w * 0.25, y: h * 0.28 },
-      { x: w * 0.52, y: h * 0.26 },
-      { x: w * 0.78, y: h * 0.30 },
-      { x: w * 0.38, y: h * 0.76 },
-      { x: w * 0.68, y: h * 0.78 },
-    ];
-
-    centers.forEach((c) => {
-      for (let i = 0; i < 85; i++) {
-        const radius = 14 + Math.random() * (w * 0.22);
-        const startAng = Math.random() * Math.PI * 2;
-        const arcLen = 0.35 + Math.random() * 1.15;
-        const jitterX = (Math.random() - 0.5) * 28;
-        const jitterY = (Math.random() - 0.5) * 22;
-        sctx.beginPath();
-        sctx.arc(c.x + jitterX, c.y + jitterY, radius, startAng, startAng + arcLen);
-        sctx.stroke();
-      }
+  if (dom.secCoating) {
+    dom.secCoating.addEventListener('pointermove', (e) => {
+      const r = dom.secCoating.getBoundingClientRect();
+      mouseCoating.x = (e.clientX - r.left) / r.width;
+      mouseCoating.y = (e.clientY - r.top) / r.height;
     });
   }
 
-  function renderCorrectionCanvasesOnce() {
-    if (!state.correctionNeedsRedraw) return;
-    const cb = dom.corrBeforeCanvas;
-    const ca = dom.corrAfterCanvas;
-    if (!cb || !ca) return;
-    if (!images.correctionBefore.complete || !images.correctionAfter.complete) return;
+  function renderCoatingSection() {
+    if (!dom.coatingCanvas) return;
+    const ctx = dom.coatingCanvas.getContext('2d');
+    const cw = dom.coatingCanvas.width;
+    const ch = dom.coatingCanvas.height;
+    drawCoverImage(ctx, cache.coatingBeads, cw, ch, 0.35, 0.5);
 
-    state.correctionNeedsRedraw = false;
-    const w = cb.width;
-    const h = cb.height;
+    ctx.save();
+    for (let i = 0; i < state.hydroDroplets.length; i++) {
+      const d = state.hydroDroplets[i];
+      const dx = d.x - mouseCoating.x;
+      const dy = d.y - mouseCoating.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 0.14 && dist > 0.0001) {
+        const push = (0.14 - dist) * 0.04;
+        d.vx += (dx / dist) * push;
+        d.vy += (dy / dist) * push;
+      }
 
-    const ctxB = cb.getContext('2d', { alpha: false });
-    drawImageSmartCover(ctxB, images.correctionBefore, w, h, { alignX: 0.5, alignY: 0.5 });
-    if (swirlPatternCanvas) {
-      ctxB.save();
-      ctxB.globalCompositeOperation = 'screen';
-      ctxB.drawImage(swirlPatternCanvas, 0, 0, w, h);
-      ctxB.restore();
+      d.x += d.vx;
+      d.y += d.vy;
+      d.vx *= 0.96;
+      d.vy = d.vy * 0.96 + 0.00011;
+
+      if (d.y > 0.96 || d.x > 0.72 || d.x < 0.04) {
+        d.x = 0.08 + Math.random() * 0.56;
+        d.y = 0.22 + Math.random() * 0.35;
+        d.vx = (Math.random() - 0.5) * 0.0008;
+        d.vy = 0.0009 + Math.random() * 0.0014;
+      }
+
+      const px = d.x * cw;
+      const py = d.y * ch;
+      const g = ctx.createRadialGradient(px - d.r * 0.3, py - d.r * 0.3, d.r * 0.1, px, py, d.r);
+      g.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+      g.addColorStop(0.55, 'rgba(226, 232, 240, 0.55)');
+      g.addColorStop(1, 'rgba(0, 0, 0, 0.1)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(px, py, d.r, 0, Math.PI * 2);
+      ctx.fill();
     }
-
-    const ctxA = ca.getContext('2d', { alpha: false });
-    drawImageSmartCover(ctxA, images.correctionAfter, w, h, { alignX: 0.5, alignY: 0.5 });
+    ctx.restore();
   }
 
-  function updateCorrectionUI(pos) {
-    if (Math.abs(pos - state.lastAppliedCorrPos) < 0.0005) return;
-    state.lastAppliedCorrPos = pos;
+  /* ------------------------------------------------------------------------
+     SECTION 3: OPTICAL PAINT CORRECTION (CLICK PRESETS + DRAG HANDLE)
+     ------------------------------------------------------------------------ */
+  function renderCorrectionCanvases() {
+    if (!dom.corrBeforeCanvas || !dom.corrAfterCanvas) return;
+    const cw = dom.corrBeforeCanvas.width;
+    const ch = dom.corrBeforeCanvas.height;
 
-    const clamped = Math.max(0.06, Math.min(0.94, pos));
-    const pct = clamped * 100;
-    const rightInset = 100 - pct;
+    const ctxAfter = dom.corrAfterCanvas.getContext('2d');
+    drawCoverImage(ctxAfter, cache.correction.after, cw, ch, 0.5, 0.5);
 
-    if (dom.corrAfterClip) {
-      dom.corrAfterClip.style.clipPath = `inset(0 ${rightInset.toFixed(2)}% 0 0)`;
-    }
-    if (dom.corrDivider) {
-      dom.corrDivider.style.left = `${pct.toFixed(2)}%`;
-    }
-    if (dom.corrHandle) {
-      dom.corrHandle.setAttribute('aria-valuenow', String(Math.round(pct)));
-    }
+    const ctxBefore = dom.corrBeforeCanvas.getContext('2d');
+    drawCoverImage(ctxBefore, cache.correction.before, cw, ch, 0.5, 0.5);
 
-    const norm = Math.max(0, Math.min(1, (0.82 - clamped) / (0.82 - 0.16)));
-    const swirls = Math.round(3400 * Math.pow(norm, 1.15));
-    if (dom.swirlCounter) {
-      dom.swirlCounter.textContent = swirls.toLocaleString('en-US');
-    }
-    if (dom.mirrorFinishBadge) {
-      dom.mirrorFinishBadge.classList.toggle('visible', swirls === 0);
-    }
+    // Subtle oxidation haze + spiderweb swirl scratches across BEFORE hood
+    ctxBefore.save();
+    ctxBefore.fillStyle = 'rgba(200, 195, 195, 0.08)';
+    ctxBefore.fillRect(0, 0, cw, ch);
+
+    ctxBefore.strokeStyle = 'rgba(255, 255, 255, 0.19)';
+    ctxBefore.lineWidth = 1.05 * DPR;
+    const centers = [[cw * 0.42, ch * 0.48], [cw * 0.65, ch * 0.45], [cw * 0.54, ch * 0.62]];
+    centers.forEach(([sx, sy]) => {
+      for (let rad = 16 * DPR; rad < 210 * DPR; rad += 10 * DPR) {
+        for (let a = 0; a < Math.PI * 2; a += 0.52) {
+          ctxBefore.beginPath();
+          ctxBefore.arc(sx, sy, rad, a, a + 0.34);
+          ctxBefore.stroke();
+        }
+      }
+    });
+    ctxBefore.restore();
+    state.corrDirty = false;
   }
+
+  function updateCorrectionUI(ratio) {
+    const r = Math.max(0.05, Math.min(0.95, ratio));
+    state.corrRatio = r;
+
+    const pct = r * 100;
+    if (dom.corrDivider) dom.corrDivider.style.left = `${pct}%`;
+    if (dom.corrAfterClip) dom.corrAfterClip.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
+    if (dom.corrHandle) dom.corrHandle.setAttribute('aria-valuenow', String(Math.round(pct)));
+
+    const swirls = Math.max(0, Math.round((1 - (r - 0.08) / 0.80) * 4000));
+    if (dom.swirlCounter) dom.swirlCounter.textContent = swirls.toLocaleString();
+
+    if (dom.mirrorBadge) dom.mirrorBadge.classList.toggle('unlocked', r >= 0.82);
+
+    dom.corrPresetBtns.forEach((btn) => {
+      const pos = parseFloat(btn.getAttribute('data-corr-pos') || '0');
+      btn.classList.toggle('active', Math.abs(pos - r) < 0.15);
+    });
+  }
+
+  dom.corrPresetBtns.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      state.corrTargetRatio = parseFloat(btn.getAttribute('data-corr-pos') || '0.5');
+    });
+  });
 
   if (dom.corrComparison) {
-    const setSliderFromClientX = (clientX) => {
+    const setFromX = (clientX) => {
       const rect = dom.corrComparison.getBoundingClientRect();
-      const relX = (clientX - rect.left) / rect.width;
-      state.targetCorrSliderPos = Math.max(0.06, Math.min(0.92, relX));
-      state.userDraggedCorrection = true;
+      const r = (clientX - rect.left) / Math.max(1, rect.width);
+      state.corrTargetRatio = Math.max(0.05, Math.min(0.95, r));
+      updateCorrectionUI(state.corrTargetRatio);
     };
 
     dom.corrComparison.addEventListener('pointerdown', (e) => {
-      state.isDraggingCorrection = true;
-      setSliderFromClientX(e.clientX);
-      if (dom.corrComparison.setPointerCapture) {
-        try { dom.corrComparison.setPointerCapture(e.pointerId); } catch (_) {}
+      if (e.target.closest('.corr-left-overlay') || e.target.closest('.corr-right-overlay')) return;
+      state.isDraggingCorr = true;
+      setFromX(e.clientX);
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (state.isDraggingCorr) setFromX(e.clientX);
+    });
+    window.addEventListener('pointerup', () => { state.isDraggingCorr = false; });
+  }
+
+  /* ------------------------------------------------------------------------
+     SECTIONS 4, 5, 6, 7: CLICK-TRIGGERED LASER CONFIGURATORS
+     ------------------------------------------------------------------------ */
+  function triggerWipe(channel, nextKey) {
+    if (nextKey === channel.current && !channel.scanning) return;
+    channel.prev = channel.current;
+    channel.current = nextKey;
+    channel.progress = 0.0;
+    channel.scanning = true;
+    channel.dirty = true;
+  }
+
+  // Section 4: Custom Wraps
+  function selectWrap(wrapKey) {
+    triggerWipe(state.wraps, wrapKey);
+    state.pricingDirty = true;
+    dom.wrapOptions.forEach((btn) => {
+      const match = btn.getAttribute('data-wrap') === wrapKey;
+      btn.classList.toggle('active', match);
+      btn.setAttribute('aria-checked', match ? 'true' : 'false');
+      if (match) {
+        const price = Number(btn.getAttribute('data-price') || 3200);
+        const name = btn.getAttribute('data-name') || 'STEALTH BLACK';
+        if (dom.wrapPriceValue) dom.wrapPriceValue.textContent = `$${price.toLocaleString()}`;
+        if (dom.yourCarWrapName) dom.yourCarWrapName.textContent = name;
       }
     });
-
-    dom.corrComparison.addEventListener('pointermove', (e) => {
-      if (!state.isDraggingCorrection) return;
-      setSliderFromClientX(e.clientX);
-    });
-
-    const endDrag = () => { state.isDraggingCorrection = false; };
-    dom.corrComparison.addEventListener('pointerup', endDrag);
-    dom.corrComparison.addEventListener('pointercancel', endDrag);
   }
-
-  // ----------------------------------------------------------
-  // 10. SECTION 4: WRAPS ("Pick your wrap.") — On-Demand Laser Sweep
-  // ----------------------------------------------------------
-  function selectWrap(wrapKey) {
-    if (!WRAP_META[wrapKey] || wrapKey === state.currentWrap) return;
-    state.previousWrap = state.currentWrap;
-    state.currentWrap = wrapKey;
-    state.wrapScanProgress = 0.0;
-    state.wrapsNeedsRedraw = true;
-    state.pricingNeedsRedraw = true;
-    state.wrapTargetPrice = WRAP_META[wrapKey].price;
-
-    dom.wrapOptions.forEach((btn) => {
-      const isSelected = btn.dataset.wrap === wrapKey;
-      btn.classList.toggle('active', isSelected);
-      btn.setAttribute('aria-checked', String(isSelected));
-    });
-
-    if (dom.wrapAccentWord) {
-      dom.wrapAccentWord.style.color = WRAP_META[wrapKey].color;
-    }
-
-    if (dom.yourCarWrapName) {
-      dom.yourCarWrapName.textContent = WRAP_META[wrapKey].name;
-    }
-  }
-
   dom.wrapOptions.forEach((btn) => {
+    btn.addEventListener('click', () => selectWrap(btn.getAttribute('data-wrap')));
+  });
+
+  // Section 5: Forged Wheel & Brake Caliper Studio
+  dom.caliperOptions.forEach((btn) => {
     btn.addEventListener('click', () => {
-      state.userClickedWrap = true;
-      selectWrap(btn.dataset.wrap);
+      const key = btn.getAttribute('data-caliper');
+      triggerWipe(state.wheels, key);
+      dom.caliperOptions.forEach((b) => {
+        const match = b === btn;
+        b.classList.toggle('active', match);
+        b.setAttribute('aria-checked', match ? 'true' : 'false');
+      });
     });
   });
 
-  if (dom.yourCarBadge) {
-    dom.yourCarBadge.addEventListener('click', () => {
-      const order = ['red', 'blue', 'silver'];
-      const next = order[(order.indexOf(state.currentWrap) + 1) % order.length];
-      state.userClickedWrap = true;
-      selectWrap(next);
+  // Section 6: Nano-Ceramic Window Tint
+  dom.tintOptions.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const rawTint = btn.getAttribute('data-tint') || '0.0';
+      const mappedKey = TINT_KEY_MAP[rawTint] || 'vlt70';
+      triggerWipe(state.tint, mappedKey);
+      dom.tintOptions.forEach((b) => {
+        const match = b === btn;
+        b.classList.toggle('active', match);
+        b.setAttribute('aria-checked', match ? 'true' : 'false');
+      });
+      if (dom.tintIrValue) dom.tintIrValue.textContent = btn.getAttribute('data-ir') || '64%';
     });
-  }
+  });
 
-  function renderWrapsCanvas() {
-    if (!state.wrapsNeedsRedraw && state.wrapScanProgress >= 1.0) return;
-
-    const c = dom.wrapsCanvas;
-    if (!c) return;
-    const ctx = c.getContext('2d', { alpha: false });
-    const cw = c.width;
-    const ch = c.height;
-
-    const imgCurr = images.wraps[state.currentWrap];
-    const imgPrev = images.wraps[state.previousWrap];
-
-    if (state.wrapScanProgress < 0.995 && imgPrev && imgPrev.complete && imgCurr && imgCurr.complete) {
-      state.wrapScanProgress = Math.min(1.0, state.wrapScanProgress + 0.036);
-      const p = state.wrapScanProgress;
-
-      drawImageSmartCover(ctx, imgPrev, cw, ch);
-
-      const scanY = ch * (0.18 + p * 0.72);
-      const tilt = ch * 0.045;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(cw, 0);
-      ctx.lineTo(cw, scanY + tilt);
-      ctx.lineTo(0, scanY - tilt);
-      ctx.closePath();
-      ctx.clip();
-
-      drawImageSmartCover(ctx, imgCurr, cw, ch);
-      ctx.restore();
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(cw * 0.24, scanY - tilt * 0.5);
-      ctx.lineTo(cw * 0.97, scanY + tilt);
-      ctx.strokeStyle = WRAP_META[state.currentWrap].glow;
-      ctx.lineWidth = Math.max(6, ch * 0.022);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(cw * 0.24, scanY - tilt * 0.5);
-      ctx.lineTo(cw * 0.97, scanY + tilt);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = Math.max(2.2, ch * 0.007);
-      ctx.stroke();
-      ctx.restore();
-    } else if (imgCurr && imgCurr.complete && imgCurr.naturalWidth) {
-      drawImageSmartCover(ctx, imgCurr, cw, ch);
-      state.wrapsNeedsRedraw = false;
-    }
-  }
-
-  // ----------------------------------------------------------
-  // 11. SECTION 5: PRICING ("Price it. Book it.") — Static Canvas + GPU CSS Zoom
-  // ----------------------------------------------------------
-  function renderPricingCanvasOnce() {
-    if (!state.pricingNeedsRedraw) return;
-    const c = dom.pricingCanvas;
-    if (!c) return;
-    const img = images.wraps[state.currentWrap] || images.wraps.silver;
-    if (!img || !img.complete || !img.naturalWidth) return;
-
-    state.pricingNeedsRedraw = false;
-    const ctx = c.getContext('2d', { alpha: false });
-    const cw = c.width;
-    const ch = c.height;
-    const isMobile = cw < ch * 0.95;
-
-    drawImageSmartCover(ctx, img, cw, ch, {
-      zoom: isMobile ? 1.08 : 1.18,
-      alignX: isMobile ? 0.65 : 0.15,
-      alignY: isMobile ? 0.35 : 0.52,
-      offsetX: isMobile ? 0 : cw * 0.14,
+  // Section 7: Supercar Cockpit Leather Sanctuary
+  dom.interiorOptions.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-interior');
+      triggerWipe(state.interior, key);
+      dom.interiorOptions.forEach((b) => {
+        const match = b === btn;
+        b.classList.toggle('active', match);
+        b.setAttribute('aria-checked', match ? 'true' : 'false');
+      });
     });
+  });
+
+  /* ------------------------------------------------------------------------
+     SECTION 8: PRICING & BOOKING CONFIGURATOR
+     ------------------------------------------------------------------------ */
+  function renderPricingSection() {
+    if (!dom.pricingCanvas) return;
+    const ctx = dom.pricingCanvas.getContext('2d');
+    const img = cache.wraps[state.wraps.current] || cache.wraps.stealth;
+    drawCoverImage(ctx, img, dom.pricingCanvas.width, dom.pricingCanvas.height, 0.72, 0.5);
+    state.pricingDirty = false;
   }
 
-  function recalculateQuote() {
-    state.targetTotal = state.pkgBase + state.vehicleAddon;
-    state.isBooked = false;
-    dom.btnBookSubmit.classList.remove('booked');
-    updateBookingButtonLabel();
-  }
-
-  function updateBookingButtonLabel() {
-    const totalFormatted = `$${state.targetTotal.toLocaleString('en-US')}`;
-    if (state.isBooked) {
-      dom.bookSubmitText.textContent = `Booked ✓ See you ${state.selectedDay || 'Saturday'}`;
-    } else if (state.selectedDay) {
-      dom.bookSubmitText.textContent = `Book ${state.selectedDay} · ${totalFormatted} →`;
-    } else {
-      dom.bookSubmitText.textContent = 'Choose a time';
-    }
+  function updateQuoteTotal() {
+    const total = state.pkgBase + state.vehicleAddon;
+    if (dom.totalAmount) dom.totalAmount.textContent = `$${total.toLocaleString()}`;
   }
 
   dom.vehicleBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
-      dom.vehicleBtns.forEach((b) => b.classList.toggle('active', b === btn));
-      state.vehicle = btn.dataset.vehicle;
-      state.vehicleAddon = parseInt(btn.dataset.addon || '0', 10);
-      recalculateQuote();
+      dom.vehicleBtns.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.vehicleAddon = Number(btn.getAttribute('data-addon') || 0);
+      updateQuoteTotal();
     });
   });
 
   dom.pkgBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
-      dom.pkgBtns.forEach((b) => b.classList.toggle('active', b === btn));
-      state.pkg = btn.dataset.pkg;
-      state.pkgBase = parseInt(btn.dataset.base || '149', 10);
-      recalculateQuote();
+      dom.pkgBtns.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.pkgBase = Number(btn.getAttribute('data-base') || 149);
+      updateQuoteTotal();
     });
   });
 
   dom.slotBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
-      dom.slotBtns.forEach((b) => b.classList.toggle('active', b === btn));
-      state.selectedSlot = btn.dataset.slot;
-      state.selectedDay = btn.dataset.day;
-      state.isBooked = false;
-      dom.btnBookSubmit.classList.remove('booked');
-      updateBookingButtonLabel();
+      dom.slotBtns.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.selectedSlot = btn.getAttribute('data-slot');
+      if (dom.btnBookSubmit) {
+        dom.btnBookSubmit.classList.remove('confirmed');
+        dom.btnBookSubmit.classList.add('ready');
+      }
+      if (dom.bookSubmitText) dom.bookSubmitText.textContent = `Reserve Bay · ${state.selectedSlot}`;
     });
   });
 
   if (dom.btnBookSubmit) {
     dom.btnBookSubmit.addEventListener('click', () => {
-      if (!state.selectedDay) {
-        const satBtn = dom.slotBtns[1] || dom.slotBtns[0];
-        if (satBtn) satBtn.click();
-        return;
+      if (!state.selectedSlot && dom.slotBtns[0]) dom.slotBtns[0].click();
+      dom.btnBookSubmit.classList.add('confirmed');
+      if (dom.bookSubmitText) {
+        dom.bookSubmitText.textContent = `✓ Bay Confirmed (${state.selectedSlot || 'Thu 9:00'}) · Raza.Developer`;
       }
-      state.isBooked = !state.isBooked;
-      dom.btnBookSubmit.classList.toggle('booked', state.isBooked);
-      updateBookingButtonLabel();
     });
   }
 
-  // ----------------------------------------------------------
-  // 12. SCROLL PROGRESS METRICS & ULTRA-LIGHT 60/120FPS MAIN LOOP
-  // ----------------------------------------------------------
-  function getSectionScrollProgress(sectionEl) {
-    if (!sectionEl) return 0;
-    const rect = sectionEl.getBoundingClientRect();
-    const scrollable = Math.max(1, rect.height - window.innerHeight);
-    return Math.max(0, Math.min(1, -rect.top / scrollable));
+  if (dom.yourCarBadge) {
+    const order = ['stealth', 'silver', 'midnight', 'crimson'];
+    dom.yourCarBadge.addEventListener('click', () => {
+      const next = order[(order.indexOf(state.wraps.current) + 1) % order.length];
+      selectWrap(next);
+      renderPricingSection();
+    });
   }
 
-  function handleScrollMetrics() {
-    const vh = window.innerHeight;
+  /* ------------------------------------------------------------------------
+     NAVIGATION PILL & SCROLL TRACKING
+     ------------------------------------------------------------------------ */
+  function updateNavPill() {
+    const active = document.querySelector('.nav-item.active');
+    if (!active || !dom.navPill || !dom.navLinks) return;
+    const navRect = dom.navLinks.getBoundingClientRect();
+    const btnRect = active.getBoundingClientRect();
+    const offsetLeft = btnRect.left - navRect.left + dom.navLinks.scrollLeft;
+    dom.navPill.style.width = `${btnRect.width}px`;
+    dom.navPill.style.transform = `translate3d(${offsetLeft - 4}px, 0, 0)`;
+  }
 
-    const sections = [
-      dom.processSection,
-      dom.coatingSection,
-      dom.correctionSection,
-      dom.wrapsSection,
-      dom.pricingSection,
-    ];
+  function scrollToSection(id) {
+    const target = document.getElementById(id);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
-    for (const sec of sections) {
-      if (!sec) continue;
-      const r = sec.getBoundingClientRect();
-      if (r.top <= vh * 0.45 && r.bottom >= vh * 0.45) {
-        if (state.activeSection !== sec.dataset.sectionId) {
-          state.activeSection = sec.dataset.sectionId;
-          updateNavPill(state.activeSection);
+  dom.navItems.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      dom.navItems.forEach((b) => b.classList.toggle('active', b === btn));
+      updateNavPill();
+      scrollToSection(btn.getAttribute('data-section'));
+    });
+  });
+
+  document.querySelectorAll('[data-goto]').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      scrollToSection(el.getAttribute('data-goto'));
+    });
+  });
+
+  const allSections = Array.from(document.querySelectorAll('[data-section-id]'));
+  window.addEventListener(
+    'scroll',
+    () => {
+      updateProcessScrollTarget();
+
+      const mid = window.innerHeight * 0.45;
+      let activeId = 'process';
+      for (const sec of allSections) {
+        const r = sec.getBoundingClientRect();
+        if (r.top <= mid && r.bottom >= mid) {
+          activeId = sec.getAttribute('data-section-id');
+          break;
         }
-        break;
       }
-    }
+      dom.navItems.forEach((btn) => {
+        const isMatch = btn.getAttribute('data-section') === activeId;
+        if (isMatch && !btn.classList.contains('active')) {
+          dom.navItems.forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          updateNavPill();
+        }
+      });
+    },
+    { passive: true }
+  );
 
-    if (state.visibleSections.has('process') && !state.isAutoPlayingProcess) {
-      state.targetProcessProgress = getSectionScrollProgress(dom.processSection);
-    }
+  /* ------------------------------------------------------------------------
+     MAIN 60FPS RENDER LOOP (WITH INTERSECTION OBSERVER CULLING)
+     ------------------------------------------------------------------------ */
+  const visible = new Set(['process']);
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        const id = e.target.getAttribute('data-section-id');
+        if (!id) return;
+        if (e.isIntersecting) visible.add(id);
+        else visible.delete(id);
+      });
+    },
+    { threshold: 0.02 }
+  );
+  allSections.forEach((s) => io.observe(s));
 
-    if (state.visibleSections.has('correction') && !state.userDraggedCorrection && !state.isDraggingCorrection) {
-      const corrP = getSectionScrollProgress(dom.correctionSection);
-      state.targetCorrSliderPos = 0.16 + corrP * 0.68;
-    }
-
-    if (state.visibleSections.has('wraps') && !state.userClickedWrap) {
-      const wrapP = getSectionScrollProgress(dom.wrapsSection);
-      if (wrapP < 0.34) selectWrap('red');
-      else if (wrapP < 0.68) selectWrap('blue');
-      else selectWrap('silver');
+  function stepLaserChannel(secId, canvas, imgMap, channel, focusX) {
+    if (!visible.has(secId) && !channel.scanning) return;
+    if (channel.scanning) {
+      channel.progress += 0.036;
+      if (channel.progress >= 1) {
+        channel.progress = 1;
+        channel.scanning = false;
+      }
+      renderWipeCanvas(canvas, imgMap, channel, focusX);
+    } else if (channel.dirty) {
+      renderWipeCanvas(canvas, imgMap, channel, focusX);
     }
   }
 
-  function mainLoop(now) {
-    // 1. Update virtual smooth scroll position (if wheel/programmatic scroll is active)
-    if (smoothScroll.isWheelActive) {
-      const diff = smoothScroll.targetY - smoothScroll.currentY;
-      if (Math.abs(diff) > 0.4) {
-        smoothScroll.currentY += diff * smoothScroll.lerp;
-        window.scrollTo(0, smoothScroll.currentY);
-        handleScrollMetrics();
-      } else {
-        smoothScroll.currentY = smoothScroll.targetY;
-        window.scrollTo(0, smoothScroll.targetY);
-        smoothScroll.isWheelActive = false;
-        handleScrollMetrics();
-      }
-    }
-
-    // 2. Process Section (only when visible)
-    if (state.visibleSections.has('process')) {
+  function tick() {
+    if (visible.has('process') || state.isAutoPlayingProcess || state.isJumpingToSection2) {
       if (state.isAutoPlayingProcess) {
-        state.targetProcessProgress = Math.min(1.0, state.targetProcessProgress + 0.0042);
-        if (state.targetProcessProgress >= 1.0) {
+        state.processProgress += 0.0045;
+        state.processTarget = state.processProgress;
+        if (state.processProgress >= 1) {
+          state.processProgress = 1;
           state.isAutoPlayingProcess = false;
-          if (dom.autoplayLabel) dom.autoplayLabel.textContent = 'Our process';
+          if (dom.autoplayLabel) dom.autoplayLabel.textContent = 'Auto wash';
         }
-      }
-      state.processProgress += (state.targetProcessProgress - state.processProgress) * 0.16;
-      renderProcessCanvas(state.processProgress);
-      updateProcessUI(state.processProgress);
-    }
-
-    // 3. Coating Section (only when visible)
-    if (state.visibleSections.has('coating')) {
-      renderCoatingCanvas(now);
-    }
-
-    // 4. Correction Section (static canvas drawn once + 120fps CSS clip-path slider)
-    if (state.visibleSections.has('correction')) {
-      renderCorrectionCanvasesOnce();
-      state.corrSliderPos += (state.targetCorrSliderPos - state.corrSliderPos) * 0.22;
-      updateCorrectionUI(state.corrSliderPos);
-    }
-
-    // 5. Wraps Section (only redraws during active laser sweep)
-    if (state.visibleSections.has('wraps')) {
-      renderWrapsCanvas();
-      if (Math.abs(state.wrapTargetPrice - state.wrapDisplayPrice) > 0.5) {
-        state.wrapDisplayPrice += (state.wrapTargetPrice - state.wrapDisplayPrice) * 0.18;
-        if (dom.wrapPriceValue) {
-          dom.wrapPriceValue.textContent = `$${Math.round(state.wrapDisplayPrice).toLocaleString('en-US')}`;
-        }
-      } else if (state.wrapDisplayPrice !== state.wrapTargetPrice) {
-        state.wrapDisplayPrice = state.wrapTargetPrice;
-        if (dom.wrapPriceValue) {
-          dom.wrapPriceValue.textContent = `$${state.wrapTargetPrice.toLocaleString('en-US')}`;
-        }
+        renderProcessSection(true);
+      } else {
+        renderProcessSection(false);
       }
     }
 
-    // 6. Pricing Section (static canvas drawn once + animated total price)
-    if (state.visibleSections.has('pricing')) {
-      renderPricingCanvasOnce();
-      if (Math.abs(state.targetTotal - state.displayTotal) > 0.5) {
-        state.displayTotal += (state.targetTotal - state.displayTotal) * 0.2;
-        if (dom.totalAmount) {
-          dom.totalAmount.textContent = `$${Math.round(state.displayTotal).toLocaleString('en-US')}`;
-        }
-      } else if (state.displayTotal !== state.targetTotal) {
-        state.displayTotal = state.targetTotal;
-        if (dom.totalAmount) {
-          dom.totalAmount.textContent = `$${state.targetTotal.toLocaleString('en-US')}`;
-        }
+    if (visible.has('coating')) renderCoatingSection();
+
+    if (visible.has('correction')) {
+      if (state.corrDirty) renderCorrectionCanvases();
+      if (Math.abs(state.corrTargetRatio - state.corrRatio) > 0.001) {
+        updateCorrectionUI(state.corrRatio + (state.corrTargetRatio - state.corrRatio) * 0.18);
       }
     }
 
-    requestAnimationFrame(mainLoop);
+    stepLaserChannel('wraps', dom.wrapsCanvas, cache.wraps, state.wraps, 0.72);
+    stepLaserChannel('wheels', dom.wheelsCanvas, cache.wheels, state.wheels, 0.5);
+    stepLaserChannel('tint', dom.tintCanvas, cache.tint, state.tint, 0.68);
+    stepLaserChannel('interior', dom.interiorCanvas, cache.interior, state.interior, 0.5);
+
+    if (visible.has('pricing') && state.pricingDirty) renderPricingSection();
+
+    requestAnimationFrame(tick);
   }
 
-  // Boot & Start Car Intro Preloader
-  preloadAllAssets();
-  const boot = () => {
-    resizeAllCanvases();
-    runCarIntroSequence(false);
-    updateNavPill('process');
-    requestAnimationFrame(mainLoop);
-  };
-
-  if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();
-  }
+  /* ------------------------------------------------------------------------
+     BOOT
+     ------------------------------------------------------------------------ */
+  runPreloaderSequence();
+  requestAnimationFrame(tick);
 })();

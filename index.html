@@ -3,164 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <title>MIRRORLINE — Detail Studio · Miami, FL</title>
-  <meta name="description" content="Mud in, mirror out. Hand wash, paint correction, ceramic coating, and custom wraps, all in one Miami studio." />
+  <title>RAZA.DEVELOPER — Bespoke Auto Detailing &amp; Customization Studio</title>
+  <meta name="description" content="Raza.Developer Automotive Studio. Multi-stage hand wash, optical paint correction, 10H ceramic coating, custom wraps, caliper studio, and cabin detailing." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="preload" as="image" href="assets/intro/hero_reveal.webp" fetchpriority="high" />
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="mode-fullscreen is-loading">
+<body class="is-loading">
 
   <!-- =====================================================
-       CINEMATIC CAR INTRO PRELOADER
-       Car drives in -> pauses with headlight flare while GPU preloads 100% of frames -> launches off!
+       CINEMATIC PHOTOREALISTIC SUPERCAR INTRO PRELOADER
+       LED headlights awaken in pitch obsidian -> champagne studio laser sweep -> zoom into Bay 01
        ===================================================== -->
-  <div class="intro-preloader" id="intro-preloader" aria-label="Loading Mirrorline Studio">
-    <!-- Overhead Hexagonal Studio LED Grid SVG -->
-    <div class="intro-hex-ceiling" aria-hidden="true">
-      <svg viewBox="0 0 800 220" width="100%" height="100%" preserveAspectRatio="xMidYMin slice">
-        <defs>
-          <filter id="hexGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="4" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-        <g class="hex-grid-lines" stroke="rgba(255,255,255,0.9)" stroke-width="2.2" fill="none" filter="url(#hexGlow)">
-          <polygon class="hex-cell hc-1" points="160,20 220,10 270,35 250,70 190,80 140,55" />
-          <polygon class="hex-cell hc-2" points="270,35 330,25 380,50 360,85 300,95 250,70" />
-          <polygon class="hex-cell hc-3" points="380,50 440,40 490,65 470,100 410,110 360,85" />
-          <polygon class="hex-cell hc-4" points="490,65 550,55 600,80 580,115 520,125 470,100" />
-          <polygon class="hex-cell hc-5" points="250,70 300,95 280,130 220,140 170,115 190,80" />
-          <polygon class="hex-cell hc-6" points="360,85 410,110 390,145 330,155 280,130 300,95" />
-          <polygon class="hex-cell hc-7" points="470,100 520,125 500,160 440,170 390,145 410,110" />
-        </g>
-      </svg>
-    </div>
-
-    <!-- Brand & Studio Status -->
+  <div class="intro-preloader" id="intro-preloader" aria-label="Loading Raza.Developer Studio">
     <div class="intro-top-brand">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <polygon points="12,2 21,7.2 21,16.8 12,22 3,16.8 3,7.2" stroke="#E11D48" stroke-width="2.3" stroke-linejoin="round" fill="rgba(225,29,72,0.12)" />
+      <svg class="brand-crest intro-crest-mark" width="32" height="32" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="crestGoldIntro" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FAF7F2" />
+            <stop offset="55%" stop-color="#DFC9A3" />
+            <stop offset="100%" stop-color="#9A7E52" />
+          </linearGradient>
+        </defs>
+        <path d="M18 2 L30 7.5 L33.5 18 L30 28.5 L18 34 L6 28.5 L2.5 18 L6 7.5 Z" fill="rgba(14,13,17,0.82)" stroke="url(#crestGoldIntro)" stroke-width="1.6" stroke-linejoin="round" />
+        <path d="M18 5 L27.6 9.5 L30.5 18 L27.6 26.5 L18 31 L8.4 26.5 L5.5 18 L8.4 9.5 Z" stroke="#DFC9A3" stroke-width="0.6" stroke-opacity="0.35" />
+        <path d="M12.5 24.5 V11.5 H20 C22.5 11.5 24.2 13 24.2 15.2 C24.2 17.4 22.5 18.8 20 18.8 H14.8" stroke="#FAF7F2" stroke-width="2.1" stroke-linecap="square" stroke-linejoin="miter" />
+        <path d="M18.2 18.8 L24.2 24.5" stroke="#DFC9A3" stroke-width="2.2" stroke-linecap="square" />
+        <rect x="17.1" y="6.8" width="1.8" height="1.8" transform="rotate(45 18 7.7)" fill="#DFC9A3" />
       </svg>
-      <span>MIRRORLINE</span>
-    </div>
-
-    <!-- Center Stage: Sports Car Drive-In -> Pause -> Launch Animation -->
-    <div class="intro-stage">
-      <div class="intro-car-rig" id="intro-car-rig">
-        <!-- Red Tail-Light Speed Trail (flares on launch) -->
-        <div class="car-tail-trail" id="car-tail-trail"></div>
-
-        <!-- Xenon Headlight Beam Cone (flares during pause & launch) -->
-        <div class="car-headlight-beam" id="car-headlight-beam"></div>
-
-        <!-- Custom Luxury GT Sports Coupe SVG -->
-        <svg class="intro-car-svg" viewBox="0 0 520 170" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="carBodyGrad" x1="0%" y1="0%" x2="100%" y2="20%">
-              <stop offset="0%" stop-color="#1A050A" />
-              <stop offset="35%" stop-color="#9E0E28" />
-              <stop offset="65%" stop-color="#E11D48" />
-              <stop offset="88%" stop-color="#FF4769" />
-              <stop offset="100%" stop-color="#7A091D" />
-            </linearGradient>
-            <linearGradient id="cabinGlassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="rgba(255,255,255,0.45)" />
-              <stop offset="45%" stop-color="rgba(15,15,22,0.95)" />
-              <stop offset="100%" stop-color="rgba(5,5,8,0.98)" />
-            </linearGradient>
-            <linearGradient id="floorGlow" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="rgba(225,29,72,0)" />
-              <stop offset="50%" stop-color="rgba(225,29,72,0.55)" />
-              <stop offset="100%" stop-color="rgba(255,255,255,0)" />
-            </linearGradient>
-          </defs>
-
-          <!-- Floor Shadow & Crimson Underglow -->
-          <ellipse cx="260" cy="144" rx="215" ry="10" fill="rgba(0,0,0,0.85)" />
-          <ellipse cx="265" cy="143" rx="170" ry="4" fill="url(#floorGlow)" />
-
-          <!-- Sleek GT Coupe Body Silhouette -->
-          <path d="M 48,118
-                   C 42,105 46,86 64,80
-                   L 128,74
-                   C 162,46 208,34 268,35
-                   C 318,36 356,54 388,74
-                   L 462,84
-                   C 482,88 492,102 488,118
-                   L 476,128
-                   L 44,128 Z"
-                fill="url(#carBodyGrad)"
-                stroke="rgba(255,255,255,0.28)"
-                stroke-width="1.2" />
-
-          <!-- Aerodynamic Specular Roof & Shoulder Line -->
-          <path d="M 66,82 L 132,75 C 166,48 210,37 268,38 C 316,39 354,56 385,75 L 468,86"
-                stroke="rgba(255,255,255,0.85)"
-                stroke-width="2"
-                stroke-linecap="round"
-                fill="none" />
-
-          <!-- Cabin Greenhouse Window -->
-          <path d="M 146,74 C 175,51 214,42 266,43 C 308,44 342,57 368,74 Z"
-                fill="url(#cabinGlassGrad)"
-                stroke="rgba(255,255,255,0.35)"
-                stroke-width="1" />
-
-          <!-- Sculpted Side Intake & Door Crease -->
-          <path d="M 185,98 L 348,94 L 332,115 L 195,115 Z"
-                fill="rgba(8,8,12,0.55)" />
-          <path d="M 175,88 L 368,86"
-                stroke="rgba(255,180,195,0.5)"
-                stroke-width="1.3" />
-
-          <!-- LED Tail Light Bar (Left/Rear) -->
-          <path d="M 46,90 L 66,88 L 62,100 L 45,100 Z"
-                fill="#FF1E42"
-                filter="url(#hexGlow)" />
-
-          <!-- Laser Xenon Headlight (Right/Front) -->
-          <path d="M 442,92 L 484,96 L 476,104 L 436,100 Z"
-                fill="#FFFFFF"
-                filter="url(#hexGlow)" />
-
-          <!-- Rear Wheel Arch & Spinning Rim -->
-          <circle cx="132" cy="122" r="32" fill="#07070A" />
-          <g class="car-wheel" style="transform-origin: 132px 122px;">
-            <circle cx="132" cy="122" r="27" fill="#121217" stroke="#2D2D37" stroke-width="4" />
-            <circle cx="132" cy="122" r="20" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-dasharray="8 6" />
-            <path d="M 132,96 L 132,148 M 106,122 L 158,122 M 114,104 L 150,140 M 150,104 L 114,140" stroke="rgba(255,255,255,0.55)" stroke-width="2" />
-            <circle cx="132" cy="122" r="6" fill="#E11D48" />
-          </g>
-
-          <!-- Front Wheel Arch & Spinning Rim -->
-          <circle cx="398" cy="122" r="32" fill="#07070A" />
-          <g class="car-wheel" style="transform-origin: 398px 122px;">
-            <circle cx="398" cy="122" r="27" fill="#121217" stroke="#2D2D37" stroke-width="4" />
-            <circle cx="398" cy="122" r="20" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-dasharray="8 6" />
-            <path d="M 398,96 L 398,148 M 372,122 L 424,122 M 380,104 L 416,140 M 416,104 L 380,140" stroke="rgba(255,255,255,0.55)" stroke-width="2" />
-            <circle cx="398" cy="122" r="6" fill="#E11D48" />
-          </g>
-        </svg>
+      <div class="intro-brand-lockup">
+        <span class="brand-wordmark"><span class="brand-main">RAZA</span><span class="brand-dot">.</span><span class="brand-ext">DEVELOPER</span></span>
+        <span class="brand-subtag">BESPOKE AUTOMOTIVE ATELIER</span>
       </div>
-
-      <!-- Studio Floor Horizon Line -->
-      <div class="intro-floor-line"></div>
     </div>
 
-    <!-- Bottom Preload Progress & Status -->
+    <div class="intro-photo-stage">
+      <div class="intro-headlight-flare" aria-hidden="true"></div>
+      <div class="intro-car-frame">
+        <img
+          src="assets/intro/hero_reveal.webp"
+          class="intro-reveal-img"
+          alt="Raza.Developer Supercar Studio Arrival"
+          decoding="async"
+          fetchpriority="high"
+        />
+        <div class="intro-laser-sweep" aria-hidden="true"></div>
+      </div>
+      <div class="intro-floor-reflection" aria-hidden="true"></div>
+    </div>
+
     <div class="intro-bottom">
       <div class="intro-headline">
-        <span class="serif-upright">Filthy to</span>
-        <span class="serif-italic text-crimson">flawless.</span>
+        <span class="serif-upright">Street grime to</span>
+        <span class="serif-italic text-silver">showroom glass.</span>
       </div>
       <div class="intro-progress-wrap">
         <div class="intro-status-row">
-          <span class="intro-status-text" id="intro-status-text">ENTERING DETAIL STUDIO...</span>
+          <span class="intro-status-text" id="intro-status-text">AWAKENING STUDIO BAY 01...</span>
           <span class="intro-pct" id="intro-pct">0%</span>
         </div>
         <div class="intro-bar-track">
@@ -170,60 +71,73 @@
     </div>
   </div>
 
-  <!-- Optional Vantrex Showcase Header (visible when Frame Mode is toggled) -->
-  <div class="showcase-header" aria-hidden="true">
-    <div class="vantrex-badge">VANTREX</div>
-    <h1 class="showcase-title">Auto Detailing</h1>
-    <div class="showcase-tags">
-      <span>UI Design</span>
-      <span>Landing Page</span>
-      <span>Motion</span>
-    </div>
-  </div>
-
-  <!-- Main Website Viewport Shell -->
+  <!-- =====================================================
+       MAIN WEBSITE VIEWPORT SHELL
+       ===================================================== -->
   <div class="site-shell" id="site-shell">
 
-    <!-- Fixed Glassmorphic Top Navbar -->
+    <!-- Fixed Glassmorphic Top Navbar (Sleek Black & White Theme) -->
     <header class="navbar" id="navbar">
-      <a href="#process" class="brand" data-nav="process" aria-label="Mirrorline Home">
-        <svg class="brand-hex" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <polygon points="12,2 21,7.2 21,16.8 12,22 3,16.8 3,7.2" stroke="#E11D48" stroke-width="2.3" stroke-linejoin="round" fill="rgba(225,29,72,0.08)" />
+      <a href="#process" class="brand" data-goto="process" aria-label="Raza.Developer Home">
+        <svg class="brand-crest" width="30" height="30" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="crestGoldNav" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FAF7F2" />
+              <stop offset="55%" stop-color="#DFC9A3" />
+              <stop offset="100%" stop-color="#9A7E52" />
+            </linearGradient>
+          </defs>
+          <path d="M18 2 L30 7.5 L33.5 18 L30 28.5 L18 34 L6 28.5 L2.5 18 L6 7.5 Z" fill="rgba(16,15,19,0.85)" stroke="url(#crestGoldNav)" stroke-width="1.6" stroke-linejoin="round" />
+          <path d="M12.5 24.5 V11.5 H20 C22.5 11.5 24.2 13 24.2 15.2 C24.2 17.4 22.5 18.8 20 18.8 H14.8" stroke="#FAF7F2" stroke-width="2.1" stroke-linecap="square" stroke-linejoin="miter" />
+          <path d="M18.2 18.8 L24.2 24.5" stroke="#DFC9A3" stroke-width="2.2" stroke-linecap="square" />
+          <rect x="17.1" y="6.8" width="1.8" height="1.8" transform="rotate(45 18 7.7)" fill="#DFC9A3" />
         </svg>
-        <span class="brand-text">MIRRORLINE</span>
+        <span class="brand-wordmark"><span class="brand-main">RAZA</span><span class="brand-dot">.</span><span class="brand-ext">DEVELOPER</span></span>
       </a>
 
       <nav class="nav-links" id="nav-links" aria-label="Primary Navigation">
         <div class="nav-pill-indicator" id="nav-pill-indicator"></div>
-        <button type="button" class="nav-item active" data-section="process">Process</button>
+        <button type="button" class="nav-item active" data-section="process">Wash</button>
         <button type="button" class="nav-item" data-section="coating">Coating</button>
-        <button type="button" class="nav-item" data-section="correction">Correction</button>
         <button type="button" class="nav-item" data-section="wraps">Wraps</button>
-        <button type="button" class="nav-item" data-section="pricing">Pricing</button>
+        <button type="button" class="nav-item" data-section="correction">Polish</button>
+        <button type="button" class="nav-item" data-section="wheels">Calipers</button>
+        <button type="button" class="nav-item" data-section="tint">Tint</button>
+        <button type="button" class="nav-item" data-section="interior">Cockpit</button>
+        <button type="button" class="nav-item" data-section="pricing">Book</button>
       </nav>
 
       <div class="nav-actions">
-        <button type="button" class="btn-book-nav" data-goto="pricing">Book a detail</button>
+        <a href="tel:+923141002327" class="nav-contact-link">+92 314 1002327</a>
+        <button type="button" class="btn-book-nav" data-goto="pricing">Book a bay</button>
       </div>
     </header>
 
     <!-- Rotating Bottom-Right Studio Stamp SVG -->
-    <div class="studio-stamp" id="studio-stamp" title="Mirrorline · Detail Studio · Miami">
+    <div class="studio-stamp" id="studio-stamp" title="Raza.Developer · Auto Studio">
       <svg class="stamp-svg" viewBox="0 0 100 100" width="80" height="80">
         <defs>
           <path id="stampTextPath" d="M 50,50 m -35,0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0" />
+          <linearGradient id="crestGoldStamp" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FAF7F2" />
+            <stop offset="100%" stop-color="#C5A572" />
+          </linearGradient>
         </defs>
-        <circle cx="50" cy="50" r="46" fill="rgba(10, 10, 13, 0.88)" stroke="rgba(255, 255, 255, 0.1)" stroke-width="1" />
+        <circle cx="50" cy="50" r="46" fill="rgba(10, 10, 13, 0.88)" stroke="rgba(223, 201, 163, 0.28)" stroke-width="1" />
         <g class="stamp-Wait-ring">
-          <text fill="rgba(255,255,255,0.85)" font-family="'JetBrains Mono', monospace" font-size="7.3" font-weight="600" letter-spacing="2.45">
-            <textPath href="#stampTextPath" startOffset="0%">MIRRORLINE · DETAIL STUDIO · MIAMI ·</textPath>
+          <text fill="rgba(244, 230, 202, 0.88)" font-family="'JetBrains Mono', monospace" font-size="6.8" font-weight="600" letter-spacing="2.1">
+            <textPath href="#stampTextPath" startOffset="0%">RAZA.DEVELOPER · AUTO STUDIO ·</textPath>
           </text>
         </g>
-        <polygon points="50,36 62,43 62,57 50,64 38,57 38,43" stroke="#E11D48" stroke-width="2.4" fill="none" stroke-linejoin="round" />
+        <g transform="translate(34.2, 34.2) scale(0.88)">
+          <path d="M18 2 L30 7.5 L33.5 18 L30 28.5 L18 34 L6 28.5 L2.5 18 L6 7.5 Z" fill="rgba(15,14,18,0.92)" stroke="url(#crestGoldStamp)" stroke-width="1.7" stroke-linejoin="round" />
+          <path d="M12.5 24.5 V11.5 H20 C22.5 11.5 24.2 13 24.2 15.2 C24.2 17.4 22.5 18.8 20 18.8 H14.8" stroke="#FAF7F2" stroke-width="2.1" stroke-linecap="square" fill="none" />
+          <path d="M18.2 18.8 L24.2 24.5" stroke="#DFC9A3" stroke-width="2.2" stroke-linecap="square" />
+        </g>
       </svg>
     </div>
 
-    <!-- Floating Mode Toggle (Full Screen vs Video Showcase Frame) -->
+    <!-- Floating Intro Replay Button -->
     <div class="floating-controls">
       <button type="button" class="frame-mode-toggle" id="replay-intro-btn" title="Replay Car Intro Animation">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -231,66 +145,57 @@
         </svg>
         <span>Intro</span>
       </button>
-      <button type="button" class="frame-mode-toggle" id="frame-mode-toggle" aria-label="Toggle Showcase Frame View" title="Switch between Fullscreen Website & Showcase Reel View">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="4" width="18" height="16" rx="3" />
-          <path d="M9 4v16" />
-        </svg>
-        <span id="frame-mode-label">Reel Frame</span>
-      </button>
     </div>
 
     <!-- =====================================================
-         SECTION 1: PROCESS (Mud -> Foam -> Rinse -> Dry -> Shine)
+         SECTION 1 (HERO — ONLY SECTION WITH SCROLL ANIMATION):
+         "Street grime to showroom glass."
+         Includes direct button (#btn-next-section) that plays wash & glides to Section 2!
          ===================================================== -->
     <section class="scroll-section section-process" id="process" data-section-id="process">
       <div class="sticky-stage" id="process-stage">
-        <!-- Full-bleed Canvas rendering the 107-frame GPU-decoded wash sequence -->
         <canvas id="process-canvas" class="stage-canvas"></canvas>
-
-        <!-- Ambient Vignette & Left Readability Gradient -->
         <div class="stage-vignette process-vignette"></div>
 
-        <!-- Interactive Hood Hotspot (appears at 05 SHINE to zoom into Ceramic Coating) -->
-        <button type="button" class="hood-hotspot" id="hood-hotspot" aria-label="Inspect Ceramic Coating on Hood">
+        <!-- Interactive Hood Hotspot -->
+        <button type="button" class="hood-hotspot" id="hood-hotspot" aria-label="Explore Ceramic Coating">
           <span class="hotspot-ring"></span>
           <span class="hotspot-dot"></span>
-          <span class="hotspot-tooltip">Inspect Coating</span>
+          <span class="hotspot-tooltip">Explore Coating ↓</span>
         </button>
 
-        <!-- Left Editorial Content -->
+        <!-- Left Minimal Luxury Editorial Content -->
         <div class="stage-content process-content">
-          <div class="eyebrow">DETAIL STUDIO &nbsp;·&nbsp; MIAMI, FL</div>
-          <h2 class="hero-heading">
-            <span class="serif-upright">Filthy to</span>
-            <span class="serif-italic" id="flawless-word">flawless.</span>
-          </h2>
+          <div class="eyebrow">RAZA.DEVELOPER &nbsp;·&nbsp; AUTO ATELIER</div>
+          <h1 class="hero-heading">
+            <span class="serif-upright">Street grime to</span>
+            <span class="serif-italic" id="flawless-word">showroom glass.</span>
+          </h1>
           <p class="hero-sub">
-            Mud in, mirror out. Hand wash, paint correction and ceramic, all in one studio.
+            Five-stage hand wash, optical paint correction, and graphene armor — crafted under one roof.
           </p>
 
           <div class="hero-cta-row">
-            <button type="button" class="btn-primary" data-goto="pricing">
-              <span>Book a detail</span>
+            <!-- Direct Button that plays Hero animation & glides to Section 2 -->
+            <button type="button" class="btn-primary" id="btn-next-section">
+              <span>Explore Coating</span>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <polyline points="19 12 12 19 5 12"></polyline>
               </svg>
             </button>
             <button type="button" class="btn-secondary" id="btn-autoplay-process">
-              <span id="autoplay-label">Our process</span>
+              <span id="autoplay-label">Auto wash</span>
             </button>
           </div>
 
-          <!-- GLOSS Meter Widget -->
+          <!-- Minimal Luxury Gloss Meter Card -->
           <div class="gloss-widget" id="gloss-widget">
             <div class="gloss-top">
-              <span class="gloss-label">GLOSS</span>
+              <span class="gloss-label">SURFACE GLOSS</span>
               <span class="gloss-value" id="gloss-value">12%</span>
             </div>
-            <div class="gloss-bars" id="gloss-bars" aria-hidden="true">
-              <!-- 24 segments populated by JS -->
-            </div>
+            <div class="gloss-bars" id="gloss-bars" aria-hidden="true"></div>
           </div>
         </div>
 
@@ -311,159 +216,335 @@
     </section>
 
     <!-- =====================================================
-         SECTION 2: COATING ("Water can't stick.")
+         SECTION 2: CERAMIC COATING (Right-Aligned Card, Left Macro Beads Open)
+         "Nothing dares to linger."
          ===================================================== -->
-    <section class="scroll-section section-coating" id="coating" data-section-id="coating">
-      <div class="sticky-stage" id="coating-stage">
+    <section class="stage-section section-coating" id="coating" data-section-id="coating">
+      <div class="stage-viewport">
         <canvas id="coating-canvas" class="stage-canvas"></canvas>
-        <div class="stage-vignette coating-vignette"></div>
+        <div class="stage-vignette coating-vignette coating-vignette-right"></div>
 
-        <div class="coating-card" id="coating-card">
-          <div class="eyebrow">CERAMIC COATING</div>
+        <div class="coating-card coating-card-right" id="coating-card">
+          <div class="eyebrow">10H GRAPHENE SHIELD</div>
           <h2 class="section-heading">
-            <span class="serif-upright">Water can't</span>
-            <span class="serif-italic text-crimson">stick.</span>
+            <span class="serif-upright">Nothing dares to</span>
+            <span class="serif-italic text-silver">linger.</span>
           </h2>
+          <p class="card-sub">Move your cursor across the hood or trigger a hydro-pulse to test the 118° lotus bead effect.</p>
           <div class="coating-divider"></div>
           <div class="coating-metrics">
             <div class="metric-item">
-              <div class="metric-val">9H</div>
+              <div class="metric-val">10H</div>
               <div class="metric-lbl">HARDNESS</div>
             </div>
             <div class="metric-item">
-              <div class="metric-val">5 yr</div>
-              <div class="metric-lbl">PROTECTION</div>
+              <div class="metric-val">7 yr</div>
+              <div class="metric-lbl">WARRANTY</div>
             </div>
             <div class="metric-item">
-              <div class="metric-val"><span id="bead-angle-val">112</span>°</div>
+              <div class="metric-val"><span id="bead-angle-val">118</span>°</div>
               <div class="metric-lbl">BEAD ANGLE</div>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =====================================================
-         SECTION 3: CORRECTION ("Erase every swirl.")
-         ===================================================== -->
-    <section class="scroll-section section-correction" id="correction" data-section-id="correction">
-      <div class="sticky-stage" id="correction-stage">
-        <!-- Split-Screen Before/After Comparison (Pre-composited GPU layers for 120fps zero-lag dragging) -->
-        <div class="correction-comparison" id="correction-comparison">
-          <!-- Bottom Layer: BEFORE (Oxidized + High-DPI Swirl Marks baked once) -->
-          <div class="corr-layer corr-before-layer">
-            <canvas id="correction-before-canvas" class="stage-canvas"></canvas>
-          </div>
-
-          <!-- Top Clipped Layer: AFTER (Flawless Mirror Paint) -->
-          <div class="corr-layer corr-after-layer" id="corr-after-clip">
-            <canvas id="correction-after-canvas" class="stage-canvas"></canvas>
-          </div>
-
-          <!-- Top-Left & Top-Right Pills -->
-          <div class="corr-pill corr-pill-after">AFTER</div>
-          <div class="corr-pill corr-pill-before">BEFORE</div>
-
-          <!-- Left Title Overlay -->
-          <div class="corr-left-overlay">
-            <div class="eyebrow">PAINT CORRECTION</div>
-            <h2 class="section-heading">
-              <span class="serif-upright">Erase every</span>
-              <span class="serif-italic text-crimson">swirl.</span>
-            </h2>
-          </div>
-
-          <!-- Right Swirl Counter Overlay -->
-          <div class="corr-right-overlay">
-            <div class="swirl-label">SWIRL MARKS</div>
-            <div class="swirl-counter" id="swirl-counter">3,400</div>
-            <div class="mirror-finish-badge" id="mirror-finish-badge">
-              <span>Mirror finish</span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Draggable Vertical Divider & Handle -->
-          <div class="corr-divider" id="corr-divider" style="left: 16%;">
-            <div class="corr-handle" id="corr-handle" role="slider" aria-label="Before and After Paint Correction Slider" aria-valuemin="5" aria-valuemax="95" aria-valuenow="16" tabindex="0">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0A0A0C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="9 18 3 12 9 6"></polyline>
-                <polyline points="15 6 21 12 15 18"></polyline>
-              </svg>
-            </div>
+          <div class="card-action-row">
+            <button type="button" class="btn-primary" id="btn-hydro-burst">Test Hydro-Pulse</button>
           </div>
         </div>
       </div>
     </section>
 
     <!-- =====================================================
-         SECTION 4: WRAPS ("Pick your wrap.")
+         SECTION 3: CUSTOM WRAPS (Sleek 2x2 Grid Above Coupe Preview)
+         "Dress the silhouette."
          ===================================================== -->
-    <section class="scroll-section section-wraps" id="wraps" data-section-id="wraps">
-      <div class="sticky-stage" id="wraps-stage">
-        <!-- Studio Car Canvas with Real-Time Laser Scan-Line Sweep Transition -->
+    <section class="stage-section section-wraps" id="wraps" data-section-id="wraps">
+      <div class="stage-viewport">
         <canvas id="wraps-canvas" class="stage-canvas"></canvas>
         <div class="stage-vignette wraps-vignette"></div>
 
-        <div class="stage-content wraps-content">
-          <div class="eyebrow">WRAP STUDIO</div>
+        <div class="stage-content wraps-content wraps-layout-raised">
+          <div class="eyebrow">BESPOKE VINYL &amp; PPF WRAPS</div>
           <h2 class="section-heading">
-            <span class="serif-upright">Pick your</span>
-            <span class="serif-italic wrap-accent-word" id="wrap-accent-word">wrap.</span>
+            <span class="serif-upright">Dress the</span>
+            <span class="serif-italic text-silver" id="wrap-accent-word">silhouette.</span>
           </h2>
 
-          <div class="wrap-options" role="radiogroup" aria-label="Select Car Wrap Finish">
-            <button type="button" class="wrap-option active" data-wrap="red" data-price="2900" data-name="CANDY RED" data-color="#E11D48" role="radio" aria-checked="true">
-              <span class="wrap-swatch swatch-red"></span>
+          <div class="wrap-options wrap-options-grid-2" role="radiogroup" aria-label="Select Car Wrap Color">
+            <button type="button" class="wrap-option active" data-wrap="stealth" data-price="3200" data-name="STEALTH BLACK" role="radio" aria-checked="true">
+              <span class="wrap-swatch swatch-stealth"></span>
               <span class="wrap-info">
-                <span class="wrap-name">Candy Red</span>
-                <span class="wrap-desc">Gloss film</span>
+                <span class="wrap-name">Stealth Black</span>
+                <span class="wrap-desc">Satin matte · $3,200</span>
               </span>
             </button>
 
-            <button type="button" class="wrap-option" data-wrap="blue" data-price="3200" data-name="MIDNIGHT BLUE" data-color="#6B8AFF" role="radio" aria-checked="false">
-              <span class="wrap-swatch swatch-blue"></span>
-              <span class="wrap-info">
-                <span class="wrap-name">Midnight Blue</span>
-                <span class="wrap-desc">Metallic flake</span>
-              </span>
-            </button>
-
-            <button type="button" class="wrap-option" data-wrap="silver" data-price="3900" data-name="LIQUID SILVER" data-color="#D8E0EA" role="radio" aria-checked="false">
+            <button type="button" class="wrap-option" data-wrap="silver" data-price="3800" data-name="LIQUID SILVER" role="radio" aria-checked="false">
               <span class="wrap-swatch swatch-silver"></span>
               <span class="wrap-info">
                 <span class="wrap-name">Liquid Silver</span>
-                <span class="wrap-desc">Polished chrome</span>
+                <span class="wrap-desc">Chrome · $3,800</span>
+              </span>
+            </button>
+
+            <button type="button" class="wrap-option" data-wrap="midnight" data-price="3400" data-name="MIDNIGHT SAPPHIRE" role="radio" aria-checked="false">
+              <span class="wrap-swatch swatch-midnight"></span>
+              <span class="wrap-info">
+                <span class="wrap-name">Sapphire Blue</span>
+                <span class="wrap-desc">Metallic · $3,400</span>
+              </span>
+            </button>
+
+            <button type="button" class="wrap-option" data-wrap="crimson" data-price="3600" data-name="ROSSO BURGUNDY" role="radio" aria-checked="false">
+              <span class="wrap-swatch swatch-crimson"></span>
+              <span class="wrap-info">
+                <span class="wrap-name">Rosso Burgundy</span>
+                <span class="wrap-desc">Gloss red · $3,600</span>
               </span>
             </button>
           </div>
 
           <div class="wrap-price-block">
-            <div class="wrap-price-label">FULL WRAP FROM</div>
-            <div class="wrap-price-value" id="wrap-price-value">$2,900</div>
+            <div class="wrap-price-label">COMPLETE CHASSIS WRAP</div>
+            <div class="wrap-price-value" id="wrap-price-value">$3,200</div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- =====================================================
-         SECTION 5: PRICING ("Price it. Book it.")
+         SECTION 4: PAINT CORRECTION (Darkroom Comparator Break)
+         "Zero swirls. Pure mirror."
          ===================================================== -->
-    <section class="scroll-section section-pricing" id="pricing" data-section-id="pricing">
-      <div class="sticky-stage pricing-stage" id="pricing-stage">
-        <!-- Right Zoomed Studio Car Preview Canvas (GPU CSS breathing animation, 0 per-frame redraws) -->
+    <section class="stage-section section-correction" id="correction" data-section-id="correction">
+      <div class="stage-viewport correction-comparison" id="correction-comparison">
+        <!-- Bottom Layer: BEFORE (Oxidized + Swirls) -->
+        <div class="corr-layer corr-before-layer">
+          <canvas id="correction-before-canvas" class="stage-canvas"></canvas>
+        </div>
+
+        <!-- Top Clipped Layer: AFTER (Flawless Mirror Hood) -->
+        <div class="corr-layer corr-after-layer" id="corr-after-clip">
+          <canvas id="correction-after-canvas" class="stage-canvas"></canvas>
+        </div>
+
+        <div class="corr-pill corr-pill-after">AFTER</div>
+        <div class="corr-pill corr-pill-before">BEFORE</div>
+
+        <div class="corr-left-overlay">
+          <div class="eyebrow">OPTICAL PAINT CORRECTION</div>
+          <h2 class="section-heading">
+            <span class="serif-upright">Zero swirls.</span>
+            <span class="serif-italic text-silver">Pure mirror.</span>
+          </h2>
+          <p class="corr-sub">Drag the optical divider or tap a polishing stage below.</p>
+          <div class="corr-stage-pills">
+            <button type="button" class="corr-preset-btn active" data-corr-pos="0.18">Before</button>
+            <button type="button" class="corr-preset-btn" data-corr-pos="0.52">Cut &amp; Polish</button>
+            <button type="button" class="corr-preset-btn" data-corr-pos="0.88">Mirror Finish</button>
+          </div>
+        </div>
+
+        <div class="corr-right-overlay">
+          <div class="swirl-counter" id="swirl-counter">3,400</div>
+          <div class="swirl-label">SWIRLS / CM²</div>
+          <div class="mirror-finish-badge" id="mirror-finish-badge">
+            <span>Mirror finish</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <div class="corr-divider" id="corr-divider" style="left: 18%;">
+          <div class="corr-handle" id="corr-handle" role="slider" aria-label="Before and After Paint Correction Slider" aria-valuemin="5" aria-valuemax="95" aria-valuenow="18" tabindex="0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#070709" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 3 12 9 6"></polyline>
+              <polyline points="15 6 21 12 15 18"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         SECTION 5: FORGED WHEEL & CALIPER STUDIO (Top Header + Bottom Dock)
+         Keeps the centered forged wheel & carbon-ceramic rotor 100% unobstructed!
+         ===================================================== -->
+    <section class="stage-section section-wheels" id="wheels" data-section-id="wheels">
+      <div class="stage-viewport showcase-split-viewport">
+        <canvas id="wheels-canvas" class="stage-canvas"></canvas>
+        <div class="stage-vignette showcase-vignette"></div>
+
+        <div class="stage-header-top-left">
+          <div class="eyebrow">WHEEL &amp; CALIPER ATELIER</div>
+          <h2 class="section-heading">
+            <span class="serif-upright">Forged to</span>
+            <span class="serif-italic text-silver">perfection.</span>
+          </h2>
+          <p class="hero-sub">
+            Wheels-off ultrasonic barrel cleaning &amp; 850°C ceramic caliper refinishing.
+          </p>
+        </div>
+
+        <div class="dock-bottom-horizontal" role="radiogroup" aria-label="Select Brake Caliper Finish">
+          <button type="button" class="wrap-option caliper-option active" data-caliper="gold" data-temp="850°C" data-price="$890" role="radio" aria-checked="true">
+            <span class="wrap-swatch swatch-gold"></span>
+            <span class="wrap-info">
+              <span class="wrap-name">Ceramic Gold</span>
+              <span class="wrap-desc">850°C · $890</span>
+            </span>
+          </button>
+
+          <button type="button" class="wrap-option caliper-option" data-caliper="crimson" data-temp="850°C" data-price="$890" role="radio" aria-checked="false">
+            <span class="wrap-swatch swatch-rosso"></span>
+            <span class="wrap-info">
+              <span class="wrap-name">Rosso Corsa</span>
+              <span class="wrap-desc">Track · $890</span>
+            </span>
+          </button>
+
+          <button type="button" class="wrap-option caliper-option" data-caliper="acid" data-temp="900°C" data-price="$950" role="radio" aria-checked="false">
+            <span class="wrap-swatch swatch-acid"></span>
+            <span class="wrap-info">
+              <span class="wrap-name">Acid Lime</span>
+              <span class="wrap-desc">Hybrid · $950</span>
+            </span>
+          </button>
+
+          <button type="button" class="wrap-option caliper-option" data-caliper="silver" data-temp="900°C" data-price="$850" role="radio" aria-checked="false">
+            <span class="wrap-swatch swatch-silver"></span>
+            <span class="wrap-info">
+              <span class="wrap-name">Brushed Steel</span>
+              <span class="wrap-desc">Stealth · $850</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         SECTION 6: SOLAR & PRIVACY CERAMIC TINT (Compact Left 2x2 Grid)
+         ===================================================== -->
+    <section class="stage-section section-tint" id="tint" data-section-id="tint">
+      <div class="stage-viewport">
+        <canvas id="tint-canvas" class="stage-canvas"></canvas>
+        <div class="stage-vignette wraps-vignette"></div>
+
+        <div class="stage-content wraps-content wraps-layout-raised">
+          <div class="eyebrow">NANO-CERAMIC SOLAR GLASS</div>
+          <h2 class="section-heading">
+            <span class="serif-upright">Privacy meets</span>
+            <span class="serif-italic text-silver">clarity.</span>
+          </h2>
+          <p class="hero-sub">
+            Blocks 99% UV and up to 96% infrared heat. Click a shade below to preview live glass tint.
+          </p>
+
+          <div class="wrap-options wrap-options-grid-2" role="radiogroup" aria-label="Select Window Tint Darkness">
+            <button type="button" class="wrap-option tint-option active" data-tint="0.0" data-ir="64%" data-vlt="70% VLT" role="radio" aria-checked="true">
+              <span class="wrap-swatch swatch-silver"></span>
+              <span class="wrap-info">
+                <span class="wrap-name">70% Clear</span>
+                <span class="wrap-desc">64% IR block</span>
+              </span>
+            </button>
+
+            <button type="button" class="wrap-option tint-option" data-tint="0.38" data-ir="82%" data-vlt="35% VLT" role="radio" aria-checked="false">
+              <span class="wrap-swatch swatch-midnight"></span>
+              <span class="wrap-info">
+                <span class="wrap-name">35% Smoke</span>
+                <span class="wrap-desc">82% IR block</span>
+              </span>
+            </button>
+
+            <button type="button" class="wrap-option tint-option" data-tint="0.68" data-ir="91%" data-vlt="15% VLT" role="radio" aria-checked="false">
+              <span class="wrap-swatch swatch-stealth"></span>
+              <span class="wrap-info">
+                <span class="wrap-name">15% Stealth</span>
+                <span class="wrap-desc">91% IR block</span>
+              </span>
+            </button>
+
+            <button type="button" class="wrap-option tint-option" data-tint="0.92" data-ir="96%" data-vlt="5% VLT" role="radio" aria-checked="false">
+              <span class="wrap-swatch" style="background:#030305;"></span>
+              <span class="wrap-info">
+                <span class="wrap-name">5% Limo</span>
+                <span class="wrap-desc">96% IR block</span>
+              </span>
+            </button>
+          </div>
+
+          <div class="wrap-price-block">
+            <div class="wrap-price-label">INFRARED HEAT REJECTION</div>
+            <div class="wrap-price-value" id="tint-ir-value">64%</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         SECTION 7: COCKPIT & ALCANTARA SANCTUARY (Top Header + Bottom Dock)
+         Keeps both seats, steering wheel, and console 100% open to view!
+         ===================================================== -->
+    <section class="stage-section section-interior" id="interior" data-section-id="interior">
+      <div class="stage-viewport showcase-split-viewport">
+        <canvas id="interior-canvas" class="stage-canvas"></canvas>
+        <div class="stage-vignette showcase-vignette"></div>
+
+        <div class="stage-header-top-left">
+          <div class="eyebrow">CABIN &amp; ALCANTARA SANCTUARY</div>
+          <h2 class="section-heading">
+            <span class="serif-upright">Tailored for</span>
+            <span class="serif-italic text-silver">the cockpit.</span>
+          </h2>
+          <p class="hero-sub">
+            Cryogenic dry-steam fiber lift and matte Nappa leather ceramic protection.
+          </p>
+        </div>
+
+        <div class="dock-bottom-horizontal" role="radiogroup" aria-label="Select Cabin Leather Trim">
+          <button type="button" class="wrap-option interior-option active" data-interior="obsidian" role="radio" aria-checked="true">
+            <span class="wrap-swatch swatch-stealth"></span>
+            <span class="wrap-info">
+              <span class="wrap-name">Obsidian Alcantara</span>
+              <span class="wrap-desc">Matte OEM finish</span>
+            </span>
+          </button>
+
+          <button type="button" class="wrap-option interior-option" data-interior="cognac" role="radio" aria-checked="false">
+            <span class="wrap-swatch swatch-cognac"></span>
+            <span class="wrap-info">
+              <span class="wrap-name">Cognac Heritage</span>
+              <span class="wrap-desc">Saddle Nappa shield</span>
+            </span>
+          </button>
+
+          <button type="button" class="wrap-option interior-option" data-interior="porcelain" role="radio" aria-checked="false">
+            <span class="wrap-swatch swatch-silver"></span>
+            <span class="wrap-info">
+              <span class="wrap-name">Porcelain Ivory</span>
+              <span class="wrap-desc">Anti-stain barrier</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         SECTION 8: PRICING & BOOKING ("Configure it. Book it.")
+         Includes Raza.Developer Direct Contact Info cleanly integrated
+         ===================================================== -->
+    <section class="stage-section section-pricing" id="pricing" data-section-id="pricing">
+      <div class="stage-viewport pricing-stage" id="pricing-stage">
         <canvas id="pricing-canvas" class="stage-canvas pricing-car-gpu"></canvas>
         <div class="stage-vignette pricing-vignette"></div>
 
         <div class="pricing-layout">
-          <!-- Left Glassmorphic Quote & Booking Card -->
           <div class="quote-card" id="quote-card">
-            <div class="eyebrow">INSTANT QUOTE</div>
+            <div class="eyebrow">RAZA.DEVELOPER &nbsp;·&nbsp; PRIVATE BAY</div>
             <h2 class="quote-heading">
               <span class="serif-upright">Price it.</span>
-              <span class="serif-italic text-crimson">Book it.</span>
+              <span class="serif-italic text-silver">Book it.</span>
             </h2>
 
             <!-- Vehicle Type -->
@@ -472,7 +553,7 @@
               <div class="quote-grid-3" id="vehicle-selector">
                 <button type="button" class="quote-pill active" data-vehicle="Coupe" data-addon="0">Coupe</button>
                 <button type="button" class="quote-pill" data-vehicle="SUV" data-addon="300">SUV</button>
-                <button type="button" class="quote-pill" data-vehicle="Truck" data-addon="500">Truck</button>
+                <button type="button" class="quote-pill" data-vehicle="Supercar" data-addon="500">Supercar</button>
               </div>
             </div>
 
@@ -482,17 +563,17 @@
               <div class="quote-grid-3" id="package-selector">
                 <button type="button" class="pkg-card active" data-pkg="Wash" data-base="149">
                   <span class="pkg-name">Wash</span>
-                  <span class="pkg-price" data-base-display="149">$149</span>
+                  <span class="pkg-price">$149</span>
                   <span class="pkg-time">2 hours</span>
                 </button>
-                <button type="button" class="pkg-card" data-pkg="Correct" data-base="649">
-                  <span class="pkg-name">Correct</span>
-                  <span class="pkg-price" data-base-display="649">$649</span>
+                <button type="button" class="pkg-card" data-pkg="Polish" data-base="649">
+                  <span class="pkg-name">Polish</span>
+                  <span class="pkg-price">$649</span>
                   <span class="pkg-time">1 day</span>
                 </button>
                 <button type="button" class="pkg-card" data-pkg="Ceramic" data-base="1499">
                   <span class="pkg-name">Ceramic</span>
-                  <span class="pkg-price" data-base-display="1499">$1,499</span>
+                  <span class="pkg-price">$1,499</span>
                   <span class="pkg-time">3 days</span>
                 </button>
               </div>
@@ -500,11 +581,11 @@
 
             <!-- Next Open Slot -->
             <div class="quote-group">
-              <div class="quote-label">NEXT OPEN</div>
+              <div class="quote-label">NEXT OPEN BAY</div>
               <div class="quote-grid-3" id="slot-selector">
-                <button type="button" class="quote-pill slot-pill" data-slot="Thu 9:00" data-day="Thursday">Thu 9:00</button>
-                <button type="button" class="quote-pill slot-pill" data-slot="Sat 11:30" data-day="Saturday">Sat 11:30</button>
-                <button type="button" class="quote-pill slot-pill" data-slot="Sun 2:00" data-day="Sunday">Sun 2:00</button>
+                <button type="button" class="quote-pill slot-pill" data-slot="Thu 9:00">Thu 9:00</button>
+                <button type="button" class="quote-pill slot-pill" data-slot="Sat 11:30">Sat 11:30</button>
+                <button type="button" class="quote-pill slot-pill" data-slot="Sun 2:00">Sun 2:00</button>
               </div>
             </div>
 
@@ -514,32 +595,47 @@
                 <div class="quote-label">YOUR TOTAL</div>
                 <div class="total-amount" id="total-amount">$149</div>
               </div>
-              <div class="total-note">Pickup and drop-off included</div>
+              <div class="total-note">Enclosed pickup &amp; drop-off included</div>
             </div>
 
-            <!-- Submit / Book CTA -->
             <button type="button" class="btn-book-submit" id="btn-book-submit">
               <span id="book-submit-text">Choose a time</span>
             </button>
+
+            <!-- Direct Concierge Contact Bar -->
+            <div class="quote-contact-strip">
+              <span><strong>Raza.Developer</strong></span>
+              <a href="mailto:razacode404@gmail.com">razacode404@gmail.com</a>
+              <a href="tel:+923141002327">+92 3141002327</a>
+            </div>
           </div>
 
-          <!-- Right Car Preview Label Pill -->
           <div class="pricing-car-preview-area">
             <button type="button" class="your-car-badge" id="your-car-badge" title="Click to cycle wrap color">
-              <span>YOUR CAR &nbsp;·&nbsp; <strong id="your-car-wrap-name">LIQUID SILVER</strong></span>
+              <span>YOUR SPEC &nbsp;·&nbsp; <strong id="your-car-wrap-name">STEALTH BLACK</strong></span>
             </button>
           </div>
         </div>
       </div>
     </section>
 
-  </div>
+    <!-- Minimal Luxury Studio Footer -->
+    <footer class="studio-footer">
+      <div class="studio-footer-inner">
+        <div class="footer-left">
+          <span class="footer-brand"><span class="brand-main">RAZA</span><span class="brand-dot">.</span><span class="brand-ext">DEVELOPER</span></span>
+          <span class="footer-sep">·</span>
+          <span>Bespoke Automotive Detailing Studio</span>
+        </div>
+        <div class="footer-right">
+          <a href="mailto:razacode404@gmail.com">razacode404@gmail.com</a>
+          <span class="footer-sep">·</span>
+          <a href="tel:+923141002327">+92 3141002327</a>
+        </div>
+      </div>
+    </footer>
 
-  <!-- Optional Showcase Footer (visible when Frame Mode is toggled) -->
-  <footer class="showcase-footer" aria-hidden="true">
-    <span>© 2026 Vantrex. All rights reserved.</span>
-    <span>@vantrex</span>
-  </footer>
+  </div>
 
   <script src="app.js"></script>
 </body>
